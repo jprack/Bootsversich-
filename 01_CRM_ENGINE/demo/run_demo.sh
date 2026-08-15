@@ -28,6 +28,15 @@ DATA="${PGDATA_DEMO:-/var/lib/postgresql/crmdemo}"
 if [ -z "$PGBIN" ]; then echo "PostgreSQL-Binärverzeichnis nicht gefunden."; exit 1; fi
 
 echo "==> Temporäre Instanz auf Port $PORT vorbereiten"
+# Eine aus einem früheren Lauf noch offene Instanz sauber beenden, bevor das
+# Datenverzeichnis gelöscht wird — sonst läuft ein Server ohne Datenverzeichnis weiter.
+if [ -f "$DATA/postmaster.pid" ]; then
+  echo "    vorherige Instanz gefunden, wird beendet"
+  su postgres -c "$PGBIN/pg_ctl -D $DATA -m immediate stop" >/dev/null 2>&1 || true
+  sleep 1
+fi
+pkill -f "bin/postgres -D $DATA" >/dev/null 2>&1 || true
+rm -f "/tmp/.s.PGSQL.$PORT" "/tmp/.s.PGSQL.$PORT.lock"
 rm -rf "$DATA"; mkdir -p "$DATA"; chown postgres "$DATA" 2>/dev/null || true
 su postgres -c "$PGBIN/initdb -D $DATA -U crm --auth=trust" >/dev/null
 su postgres -c "$PGBIN/pg_ctl -D $DATA -o '-k /tmp -p $PORT -c listen_addresses=' -l /tmp/pgdemo.log start" >/dev/null
@@ -45,6 +54,9 @@ echo "==> Demodaten (Vertrieb)"   && $PSQL -f "$HIER/01_seed_vertrieb.sql"
 echo "==> Engine"                 && $PSQL -f "$HIER/02_engine.sql"
 echo "==> Regelwerk"              && $PSQL -f "$HIER/03_regelwerk.sql"
 echo "==> Kalibrierung 1.1"       && $PSQL -f "$HIER/05_kalibrierung_v11.sql"
+echo "==> Kalibrierung 1.2"       && $PSQL -f "$HIER/06_kalibrierung_v12.sql"
+echo "==> Lastschutz"            && $PSQL -f "$HIER/08_lastschutz.sql"
+echo "==> Fassung 1.3"           && $PSQL -f "$HIER/09_fixes_v13.sql"
 psql -h /tmp -p "$PORT" -U crm -d crmdemo -qAt -c \
   "SELECT 'DROP FUNCTION '||oid::regprocedure||';' FROM pg_proc WHERE proname='crm_fn_aufgabe' AND pronargs=14;" \
   | psql -h /tmp -p "$PORT" -U crm -d crmdemo -q

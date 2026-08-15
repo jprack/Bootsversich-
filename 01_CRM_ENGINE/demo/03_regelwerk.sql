@@ -25,7 +25,8 @@ INSERT INTO crm_automation_regel (mandant_id,code,bezeichnung,ausloeser_typ,ausl
  (:M,'A-30','Next Best Offer','zeitplan','0 2 * * *','[{"typ":"opportunity"},{"typ":"aufgabe"}]',25),
  (:M,'A-34','Empfehlung eingegangen','event','crm.empfehlung.eingegangen','[{"typ":"aufgabe"}]',NULL),
  (:M,'A-35','Empfehlung ohne Rückmeldung an den Geber','zeitplan','0 6 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-37','Partnerkontakt überfällig','zeitplan','0 6 1 * *','[{"typ":"aufgabe"}]',25);
+ (:M,'A-37','Partnerkontakt überfällig','zeitplan','0 6 1 * *','[{"typ":"aufgabe"}]',25)
+ON CONFLICT (mandant_id, code) DO NOTHING;   -- Skript muss wiederholbar sein
 
 -- =============================================================================
 --  MUSTERERKENNUNG M1 - M8
@@ -269,22 +270,33 @@ BEGIN
   END LOOP;
 
   -- ---- A-21: Hauptfälligkeit T-90 / T-60 / T-30 ----------------------------
-  FOR r IN SELECT v.*, k.bezeichnung, k.betreuer_id, k.customer_value_score,
-                  (v.hauptfaelligkeit-current_date) AS tage
+  -- D2: Aggregation je Kunde. Vorher lief die Schleife je Vertrag und summierte
+  -- den Wert im Aufgabenhelfer auf — das kumulierte über Nachtläufe hinweg.
+  FOR r IN SELECT v.kunde_id, k.bezeichnung, k.betreuer_id, k.customer_value_score,
+                  min(v.hauptfaelligkeit) AS hauptfaelligkeit,
+                  min(v.hauptfaelligkeit - current_date)::int AS tage,
+                  sum(v.jahrespraemie_eur) AS praemie_summe,
+                  count(*) AS anzahl_policen,
+                  max(v.praemienaenderung_prozent) AS max_aenderung,
+                  string_agg(v.policennummer, ', ' ORDER BY v.policennummer) AS policen
              FROM crm_vertrag_ref v JOIN crm_kunde k ON k.id=v.kunde_id
             WHERE v.mandant_id=p_mandant AND v.status='aktiv'
               AND v.hauptfaelligkeit BETWEEN current_date AND current_date+90
+            GROUP BY v.kunde_id, k.bezeichnung, k.betreuer_id, k.customer_value_score
   LOOP
     PERFORM crm_fn_aufgabe(p_mandant,'A-21',
       'Hauptfälligkeitsgespräch: '||r.bezeichnung,
-      'Police '||r.policennummer||' läuft am '||to_char(r.hauptfaelligkeit,'DD.MM.YYYY')||' zur Hauptfälligkeit ('||
-      r.tage||' Tage). Jahresprämie '||to_char(r.jahrespraemie_eur,'FM999G999')||' €'||
-      CASE WHEN r.praemienaenderung_prozent > 0 THEN ', letzte Anpassung +'||r.praemienaenderung_prozent||' %' ELSE '' END||'.',
+      CASE WHEN r.anzahl_policen>1
+           THEN r.anzahl_policen||' Policen ('||r.policen||') laufen am '
+           ELSE 'Police '||r.policen||' läuft am ' END||
+      to_char(r.hauptfaelligkeit,'DD.MM.YYYY')||' zur Hauptfälligkeit ('||r.tage||' Tage). '||
+      'Gefährdete Jahresprämie '||to_char(r.praemie_summe,'FM999G999')||' €'||
+      CASE WHEN r.max_aenderung > 0 THEN ', letzte Anpassung +'||r.max_aenderung||' %' ELSE '' END||'.',
       'hauptfaelligkeit', CASE WHEN r.tage <= 30 THEN 'kritisch' WHEN r.tage <= 60 THEN 'hoch' ELSE 'normal' END,
-      (current_date + greatest(0, r.tage - 60))::timestamptz + interval '9 hours',
-      r.betreuer_id,'kunde',r.kunde_id, r.jahrespraemie_eur, NULL,
-      jsonb_build_object('police',r.policennummer,'hauptfaelligkeit',r.hauptfaelligkeit,'tage',r.tage),
-      'HF-'||r.kunde_id::text, true);   -- K4: gefährdete Jahresprämie kumulieren
+      crm_fn_hauptfaelligkeit_termin(r.tage),
+      r.betreuer_id,'kunde',r.kunde_id, r.praemie_summe, NULL,
+      jsonb_build_object('policen',r.policen,'anzahl',r.anzahl_policen,
+                         'hauptfaelligkeit',r.hauptfaelligkeit,'tage',r.tage));
     n := n + 1;
   END LOOP;
 
@@ -367,19 +379,7 @@ BEGIN
             WHERE nb.mandant_id=p_mandant AND nb.status='offen'
               AND (nb.erwarteter_wert_eur >= 200 OR nb.trefferwahrscheinlichkeit >= 0.40)
   LOOP
-    INSERT INTO crm_opportunity (mandant_id,opportunity_nummer,name,kunde_id,kontakt_id,boot_ref_id,
-        wert_eur,wahrscheinlichkeit,produktinteresse,quelle_id,verantwortlicher_id,team_id,
-        pipeline_stufe,erwartetes_abschlussdatum,naechster_schritt,naechster_schritt_am,ursprung,regel_code)
-    VALUES (p_mandant,'O-NBO-'||substr(r.id::text,1,8),
-        r.bezeichnung||' — '||r.regel_code||' — '||left(r.begruendung,60),
-        r.kunde_id,r.haupt_kontakt_id,r.boot_ref_id,
-        r.erwarteter_wert_eur,10,'{}',
-        (SELECT id FROM crm_lead_quelle WHERE code='WEB' AND mandant_id=p_mandant),
-        r.betreuer_id,r.team_id,'neu',current_date+60,'Bedarf ansprechen',current_date+7,
-        'next_best_offer',r.regel_code)
-    RETURNING id INTO v_id;
-
-    UPDATE crm_nbo_vorschlag SET status='opportunity_erzeugt', opportunity_id=v_id WHERE id=r.id;
+    v_id := crm_fn_nbo_opportunity(p_mandant, r.id);   -- D4: keine zweite Chance je Regel und Kunde
 
     PERFORM crm_fn_aufgabe(p_mandant,'A-30',
       'Cross-Sell ansprechen: '||r.bezeichnung,

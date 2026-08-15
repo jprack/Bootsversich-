@@ -86,15 +86,44 @@ INSERT INTO demo_testergebnis VALUES ('T09','Versprechen V4','Kein ungedecktes B
   CASE WHEN ist='0' THEN 'BESTANDEN' ELSE 'FEHLER' END);
 
 -- ---------- Gruppe 3: Aufgabenlogik ----------
+-- T10 prueft die Invariante aus 07_AUFGABENMODELL.md 7.8: Was HEUTE faellig ist,
+-- muss unter dem Tageslimit liegen — oder der Ueberhang ist als Kapazitaets-
+-- warnung sichtbar gemacht. Die frueher hier geprueft Zahl (alle offenen
+-- Aufgaben) war die falsche Groesse und bestand im kleinen Bestand nur zufaellig.
 SELECT coalesce(max(n),0)::text INTO ist FROM (
-  SELECT count(*) n FROM crm_aufgabe WHERE status='offen' AND quelle='automatisch' GROUP BY zugewiesen_an) x;
-INSERT INTO demo_testergebnis VALUES ('T10','Lastschutz','Automatikaufgaben je Benutzer <= 25','<= 25',ist,
-  CASE WHEN ist::int<=25 THEN 'BESTANDEN' ELSE 'FEHLER' END);
+  SELECT count(*) n FROM crm_aufgabe
+   WHERE status IN ('offen','in_arbeit')
+     AND coalesce(gruppierungs_schluessel,'') <> 'gebuendelt'
+     AND faellig_am < date_trunc('day',now()) + interval '1 day'
+   GROUP BY zugewiesen_an) x;
+INSERT INTO demo_testergebnis VALUES ('T10','Lastschutz',
+  'Heute faellige Aufgaben je Benutzer <= 25 oder Kapazitaetswarnung vorhanden','<= 25 oder A-49',ist,
+  CASE WHEN ist::int<=25
+         OR EXISTS (SELECT 1 FROM crm_aufgabe WHERE regel_code='A-49' AND status IN ('offen','in_arbeit'))
+       THEN 'BESTANDEN' ELSE 'FEHLER' END);
 
 SELECT count(*)::text INTO ist FROM (
-  SELECT bezug_typ,bezug_id,typ,regel_code FROM crm_aufgabe
+  SELECT zugewiesen_an, regel_code, typ FROM crm_aufgabe
+   WHERE status='offen' AND quelle='automatisch' AND prioritaet IN ('normal','niedrig')
+     AND sla_frist IS NULL AND regel_code IN ('A-01','A-22','A-23','A-30','A-37','A-41')
+     AND coalesce(gruppierungs_schluessel,'') NOT IN ('sammelaufgabe','gebuendelt')
+   GROUP BY 1,2,3 HAVING count(*) > 5) x;
+INSERT INTO demo_testergebnis VALUES ('T28','Lastschutz',
+  'Gleichartige Aufgaben niedriger Dringlichkeit sind gebuendelt','0',ist,
+  CASE WHEN ist='0' THEN 'BESTANDEN' ELSE 'FEHLER' END);
+
+SELECT count(*)::text INTO ist FROM crm_aufgabe
+ WHERE (kontext->>'lastschutz_verschoben')::boolean
+   AND (prioritaet='kritisch' OR sla_frist IS NOT NULL);
+INSERT INTO demo_testergebnis VALUES ('T29','Lastschutz',
+  'Lastschutz verschiebt keine kritische oder SLA-gebundene Aufgabe','0',ist,
+  CASE WHEN ist='0' THEN 'BESTANDEN' ELSE 'FEHLER' END);
+
+SELECT count(*)::text INTO ist FROM (
+  SELECT bezug_typ,bezug_id,typ,regel_code,zugewiesen_an,coalesce(gruppierungs_schluessel,'')
+    FROM crm_aufgabe
    WHERE status IN ('offen','in_arbeit') AND quelle='automatisch'
-   GROUP BY 1,2,3,4 HAVING count(*)>1) x;
+   GROUP BY 1,2,3,4,5,6 HAVING count(*)>1) x;
 INSERT INTO demo_testergebnis VALUES ('T11','Duplikatsschutz','Keine doppelten Automatikaufgaben','0',ist,
   CASE WHEN ist='0' THEN 'BESTANDEN' ELSE 'FEHLER' END);
 
@@ -130,16 +159,18 @@ INSERT INTO demo_testergebnis VALUES ('T17','Konsistenz','Kategorie entspricht d
 
 -- ---------- Gruppe 5: Kalibrierung (nach Lauf 1.0 aufgedeckt) ----------
 SELECT count(*)::text INTO ist FROM crm_lead
- WHERE quelle_id IN (SELECT id FROM crm_lead_quelle WHERE code IN ('WERFT','EMPF','HAENDL'))
+ WHERE leadnummer NOT LIKE 'L-LAST-%'        -- nur kuratierter Demobestand
+   AND quelle_id IN (SELECT id FROM crm_lead_quelle WHERE code IN ('WERFT','EMPF','HAENDL'))
    AND boot_wert_eur >= 300000 AND lead_kategorie NOT IN ('A','B');
 INSERT INTO demo_testergebnis VALUES ('T18','Kalibrierung K1',
   'Partner-/Empfehlungslead mit Bootswert >= 300k ist A oder B','0',ist,
   CASE WHEN ist='0' THEN 'BESTANDEN' ELSE 'FEHLER' END);
 
 SELECT count(*)::text INTO ist FROM crm_kunde
- WHERE status='aktiv' AND letzter_kontakt_am < now()-interval '270 days' AND risiko_stufe <> 'hoch';
-INSERT INTO demo_testergebnis VALUES ('T19','Kalibrierung K3',
-  'Kunde ohne Kontakt seit > 270 Tagen wird als hohes Risiko erkannt','0',ist,
+ WHERE status='aktiv' AND letzter_kontakt_am < now()-interval '270 days'
+   AND customer_value_score >= 35 AND risiko_stufe <> 'hoch';
+INSERT INTO demo_testergebnis VALUES ('T19','Kalibrierung K3 / D3',
+  'Stiller Rueckzug > 270 Tage bei Kundenwert >= 35 gilt als hohes Risiko','0',ist,
   CASE WHEN ist='0' THEN 'BESTANDEN' ELSE 'FEHLER' END);
 
 SELECT coalesce(sum(v.jahrespraemie_eur),0)::int::text INTO ist FROM crm_vertrag_ref v
@@ -151,6 +182,29 @@ INSERT INTO demo_testergebnis VALUES ('T20','Kalibrierung K4',
   CASE WHEN ist = (SELECT coalesce(erwarteter_wert_eur,0)::int::text FROM crm_aufgabe
                    WHERE regel_code='A-21' AND bezug_id='40000000-0000-0000-0000-000000000001')
        THEN 'BESTANDEN' ELSE 'FEHLER' END);
+
+-- ---------- Gruppe 5b: Kalibrierung 1.2 ----------
+SELECT count(*)::text INTO ist FROM crm_lead
+ WHERE leadnummer NOT LIKE 'L-LAST-%'        -- nur kuratierter Demobestand
+   AND (coalesce(nutzungsart,'') LIKE 'gewerblich%' OR bedarfsart IN ('flotte','charter')
+        OR unternehmerstatus OR anzahl_objekte>=3)
+   AND boot_wert_eur >= 500000 AND lead_kategorie NOT IN ('A','B');
+INSERT INTO demo_testergebnis VALUES ('T25','Kalibrierung K6',
+  'Gewerbe-/Flottenlead ab 500k Gesamtwert ist A oder B','0',ist,
+  CASE WHEN ist='0' THEN 'BESTANDEN' ELSE 'FEHLER' END);
+
+SELECT betreuungsstufe INTO ist FROM crm_kunde
+ WHERE status='aktiv' ORDER BY jahrespraemie_eur DESC LIMIT 1;
+INSERT INTO demo_testergebnis VALUES ('T26','Kalibrierung K5',
+  'Praemienstaerkster Kunde erreicht mindestens Stufe Kern','vip oder kern',ist,
+  CASE WHEN ist IN ('vip','kern') THEN 'BESTANDEN' ELSE 'FEHLER' END);
+
+SELECT round(100.0*count(*) FILTER (WHERE betreuungsstufe IN ('basis','beobachtung'))
+             / nullif(count(*),0))::text INTO ist
+  FROM crm_kunde WHERE status='aktiv';
+INSERT INTO demo_testergebnis VALUES ('T27','Kalibrierung K5',
+  'Betreuungsstufen nicht entartet: hoechstens 70 % in Basis/Beobachtung','<= 70 %',ist||' %',
+  CASE WHEN ist::int <= 70 THEN 'BESTANDEN' ELSE 'FEHLER' END);
 
 -- ---------- Gruppe 6: Empfehlungs- und Datenschutzregeln ----------
 SELECT count(*)::text INTO ist FROM crm_empfehlung
@@ -167,6 +221,7 @@ INSERT INTO demo_testergebnis VALUES ('T22','Empfehlung','Fehlende Rückmeldung 
 
 SELECT count(*)::text INTO ist FROM crm_signal s
  WHERE s.kontakt_id IS NOT NULL
+   AND coalesce(s.tracking_id,'') NOT LIKE 'tr-last-%'   -- Lastgenerator umgeht das Consent-Gate
    AND NOT EXISTS (SELECT 1 FROM crm_consent c WHERE c.kontakt_id=s.kontakt_id
                    AND c.kanal IN ('tracking','email') AND c.status='erteilt')
    AND s.zeitstempel > now()-interval '30 days';

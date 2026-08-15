@@ -497,6 +497,7 @@ CREATE TABLE crm_lead (
     boot_wert_eur   numeric(14,2),
     boot_baujahr    int,
     motorleistung_kw numeric(8,2),
+    anzahl_objekte  int NOT NULL DEFAULT 1 CHECK (anzahl_objekte > 0),  -- Flottengröße; boot_wert_eur ist dann der Gesamtwert
     liegeplatz_land text,
     liegeplatz_marina text,
     fahrgebiet      text CHECK (fahrgebiet IN ('binnen','kuestennah','nord_ostsee','mittelmeer','atlantik','weltweit')),
@@ -1300,6 +1301,9 @@ FROM crm_aufgabe a
 LEFT JOIN crm_kunde k ON k.id = a.bezug_id AND a.bezug_typ = 'kunde'
 WHERE a.status IN ('offen','in_arbeit')
   AND a.geloescht_am IS NULL
+  -- Gebündelte Einzelaufgaben bleiben offen (Versprechen V1), erscheinen aber
+  -- nicht einzeln in der Tagesliste — dort steht stattdessen die Sammelaufgabe.
+  AND coalesce(a.gruppierungs_schluessel,'') <> 'gebuendelt'
 ORDER BY
     (a.sla_frist IS NOT NULL AND a.sla_frist < now()) DESC,
     a.prioritaets_score DESC,

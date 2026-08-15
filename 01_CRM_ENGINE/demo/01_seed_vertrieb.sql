@@ -9,49 +9,49 @@
 
 -- --- LEADS --------------------------------------------------------------------
 INSERT INTO crm_lead (id,mandant_id,leadnummer,kontakt_id,kunde_id,bedarfsart,beschreibung,produktinteresse,zeitfenster,
-  boot_typ,boot_laenge_m,boot_wert_eur,boot_baujahr,motorleistung_kw,liegeplatz_marina,fahrgebiet,nutzungsart,unternehmerstatus,
+  boot_typ,boot_laenge_m,boot_wert_eur,boot_baujahr,motorleistung_kw,anzahl_objekte,liegeplatz_marina,fahrgebiet,nutzungsart,unternehmerstatus,
   bestehender_versicherer,hauptfaelligkeit_bestand,quelle_id,verantwortlicher_id,status,eingegangen_am,erstkontakt_faellig_am,erstkontakt_am,reaktionszeit_minuten)
 VALUES
  -- L1: A-Lead, Werftempfehlung, hoher Bootswert, Hauptfälligkeit in 47 Tagen
  ('90000000-0000-0000-0000-000000000001',:M,'L-2026-004711','30000000-0000-0000-0000-000000000021',NULL,'wechsel',
   'Werftübergabe Ostsee-Yachtbau. Neue Bavaria Cruiser 46, Wechsel zur Hauptfälligkeit gewünscht.',
-  '{KASKO,HP}','3_monate','segelyacht',14.27,380000,2019,42,'Düsternbrook','nord_ostsee','privat',false,
+  '{KASKO,HP}','3_monate','segelyacht',14.27,380000,2019,42,1,'Düsternbrook','nord_ostsee','privat',false,
   'Muster Assekuranz',current_date+47,'26000000-0000-0000-0000-000000000007',:U1,'neu',
   now()-interval '4 hours', now()+interval '1 hour', NULL, NULL),
  -- L2: Empfehlung einer Bestandskundin
  ('90000000-0000-0000-0000-000000000002',:M,'L-2026-004698','30000000-0000-0000-0000-000000000022',NULL,'neuversicherung',
   'Empfehlung Dr. Wessel. Neuerwerb X-Yachts, sucht Kasko inkl. Skipperdeckung.',
-  '{KASKO,SKIPPER}','4_wochen','segelyacht',11.99,210000,2018,29,'Heikendorf','nord_ostsee','privat',false,
+  '{KASKO,SKIPPER}','4_wochen','segelyacht',11.99,210000,2018,29,1,'Heikendorf','nord_ostsee','privat',false,
   NULL,NULL,'26000000-0000-0000-0000-000000000005',:U2,'kontaktiert',
   now()-interval '4 days', now()-interval '3 days 20 hours', now()-interval '2 days', 2880),
  -- L3: Messe-Lead, Flottenpotenzial, KEINE offene Aufgabe -> Vergessenswächter A-01
  ('90000000-0000-0000-0000-000000000003',:M,'L-2026-004655','30000000-0000-0000-0000-000000000023',NULL,'flotte',
   'Messekontakt Hanseboot. 4 Charterboote Nordsee, unzufrieden mit Bestandsversicherer.',
-  '{FLOTTE,CHARTER}','3_monate','motoryacht',12.50,890000,2020,2*191,'Büsum','kuestennah','gewerblich_charter',true,
+  '{FLOTTE,CHARTER}','3_monate','motoryacht',12.50,890000,2020,2*191,4,'Büsum','kuestennah','gewerblich_charter',true,
   'Nordmarine Vers.',current_date+190,'26000000-0000-0000-0000-000000000010',:U2,'kontaktiert',
   now()-interval '9 days', now()-interval '8 days', now()-interval '7 days', 1440),
  -- L4: Paid-Social-Lead, kleines Objekt -> D
  ('90000000-0000-0000-0000-000000000004',:M,'L-2026-004702','30000000-0000-0000-0000-000000000024',NULL,'skipper',
   'Instagram-Formular. Chartertörn Kroatien geplant, sucht Skipperhaftpflicht.',
-  '{SKIPPER}','unklar','sportboot',5.20,35000,2012,60,NULL,'binnen','privat',false,
+  '{SKIPPER}','unklar','sportboot',5.20,35000,2012,60,1,NULL,'binnen','privat',false,
   NULL,NULL,'26000000-0000-0000-0000-000000000013',:U2,'neu',
   now()-interval '6 days', now()-interval '3 days', NULL, NULL),
  -- L5: Konfigurator abgebrochen -> Muster M2
  ('90000000-0000-0000-0000-000000000005',:M,'L-2026-004715','30000000-0000-0000-0000-000000000025',NULL,'neuversicherung',
   'Prämienrechner auf der Website abgebrochen (Schritt 3 von 4).',
-  '{KASKO}','sofort','motoryacht',9.80,128000,2017,2*110,'Rendsburg','binnen','privat',false,
+  '{KASKO}','sofort','motoryacht',9.80,128000,2017,2*110,1,'Rendsburg','binnen','privat',false,
   NULL,NULL,'26000000-0000-0000-0000-000000000001',:U1,'neu',
   now()-interval '2 hours', now()+interval '22 hours', NULL, NULL),
  -- L6: Marketplace, Bootswechsel -> Muster M4
  ('90000000-0000-0000-0000-000000000006',:M,'L-2026-004709','30000000-0000-0000-0000-000000000026',NULL,'bootswechsel',
   'Marketplace: eigenes Boot inseriert, gleichzeitig Kaufanfrage für größere Yacht.',
-  '{KASKO,HP}','4_wochen','segelyacht',13.10,340000,2021,40,'Hamburg','nord_ostsee','privat',false,
+  '{KASKO,HP}','4_wochen','segelyacht',13.10,340000,2021,40,1,'Hamburg','nord_ostsee','privat',false,
   'Elbversicherung',current_date+96,'26000000-0000-0000-0000-000000000015',:U1,'neu',
   now()-interval '3 days', now()-interval '2 days', NULL, NULL),
  -- L7: seit 197 Tagen kein Signal -> A-08 Nurturing, Consent widerrufen
  ('90000000-0000-0000-0000-000000000007',:M,'L-2026-002210','30000000-0000-0000-0000-000000000027',NULL,'neuversicherung',
   'Anfrage über Landingpage Winterlager, seither keine Reaktion.',
-  '{WINTER}','unklar','sportboot',6.40,42000,2014,75,NULL,'binnen','privat',false,
+  '{WINTER}','unklar','sportboot',6.40,42000,2014,75,1,NULL,'binnen','privat',false,
   NULL,NULL,'26000000-0000-0000-0000-000000000002',:U2,'in_bearbeitung',
   now()-interval '205 days', now()-interval '202 days', now()-interval '200 days', 4320);
 
