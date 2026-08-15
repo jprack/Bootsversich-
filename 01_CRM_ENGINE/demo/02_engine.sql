@@ -25,6 +25,7 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 2. LEAD SCORE  (Regelmodell, Blöcke A-D, Timing-Multiplikator, Decay)
 -- -----------------------------------------------------------------------------
+SET client_min_messages = warning;   -- kein NOTICE beim erstmaligen Anlegen
 DROP TYPE IF EXISTS crm_typ_score CASCADE;
 CREATE TYPE crm_typ_score AS (score int, kategorie text, erklaerung jsonb);
 

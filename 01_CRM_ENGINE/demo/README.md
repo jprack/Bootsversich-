@@ -7,14 +7,27 @@ Handlungen erzeugt — und nicht nur behauptet, es zu tun.
 ## Ausführen
 
 ```bash
-./run_demo.sh            # Standardport 55432
-./run_demo.sh 55555      # abweichender Port
+./run_demo.sh                 # Standardport 55432, Instanz bleibt danach offen
+./run_demo.sh 55555           # abweichender Port
+./run_demo.sh --stop          # Instanz nach dem Lauf beenden
 ```
 
 Das Skript legt eine temporäre Instanz an, rollt Schema, Demodaten, Engine und
 Kalibrierung aus, führt einen Nachtlauf durch, gibt die erzeugte Tagesliste aus
-und lässt die Testsuite laufen. Die Instanz wird beim Beenden gestoppt.
+und lässt die Testsuite laufen. Danach bleibt die Instanz geöffnet, sodass man
+mit `psql -h /tmp -p 55432 -U crm -d crmdemo` weiterarbeiten kann.
 Voraussetzung: PostgreSQL ≥ 15 lokal installiert (nur Binaries, kein laufender Dienst).
+
+Nützliche Einstiegspunkte in der laufenden Instanz:
+
+```sql
+SELECT * FROM vw_crm_next_best_action WHERE benutzer_id = '22222222-0000-0000-0000-000000000001';
+SELECT * FROM vw_crm_kunde_360 ORDER BY customer_value_score DESC;
+SELECT * FROM vw_crm_pipeline;
+SELECT * FROM vw_crm_quellen_performance;
+SELECT * FROM vw_crm_vergessene_vorgaenge;          -- muss leer sein
+SELECT * FROM crm_fn_engine_lauf('11111111-0000-0000-0000-000000000001');  -- erneut rechnen
+```
 
 ## Dateien
 

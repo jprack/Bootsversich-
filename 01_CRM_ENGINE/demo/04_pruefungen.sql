@@ -17,6 +17,7 @@ BEGIN
 END;
 $$;
 
+SET client_min_messages = warning;
 DROP TABLE IF EXISTS demo_testergebnis;
 CREATE TEMP TABLE demo_testergebnis (nr text, bereich text, pruefung text, erwartet text, ist text, status text);
 

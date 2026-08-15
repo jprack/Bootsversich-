@@ -5,11 +5,21 @@
 #  Legt eine temporäre PostgreSQL-Instanz an, rollt Schema, Demodaten und
 #  Engine aus, führt einen Nachtlauf durch und lässt die Testsuite laufen.
 #
-#  Aufruf:  ./run_demo.sh [PORT]     (Standardport 55432)
+#  Aufruf:  ./run_demo.sh [PORT] [--stop]
+#           PORT    Standardport 55432
+#           --stop  Instanz nach dem Lauf beenden. Ohne diesen Schalter bleibt
+#                   sie geoeffnet, damit man mit psql weiterarbeiten kann.
 # =============================================================================
 set -euo pipefail
 
-PORT="${1:-55432}"
+STOP_NACH_LAUF=0
+PORT=55432
+for arg in "$@"; do
+  case "$arg" in
+    --stop) STOP_NACH_LAUF=1 ;;
+    *[0-9]*) PORT="$arg" ;;
+  esac
+done
 HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCHEMA="$HIER/../schema/crm_schema.sql"
 PGBIN="$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | tail -1)"
@@ -21,7 +31,10 @@ echo "==> Temporäre Instanz auf Port $PORT vorbereiten"
 rm -rf "$DATA"; mkdir -p "$DATA"; chown postgres "$DATA" 2>/dev/null || true
 su postgres -c "$PGBIN/initdb -D $DATA -U crm --auth=trust" >/dev/null
 su postgres -c "$PGBIN/pg_ctl -D $DATA -o '-k /tmp -p $PORT -c listen_addresses=' -l /tmp/pgdemo.log start" >/dev/null
-trap 'su postgres -c "$PGBIN/pg_ctl -D $DATA stop" >/dev/null 2>&1 || true' EXIT
+# Bei Abbruch oder Fehler aufraeumen; bei Erfolg entscheidet --stop (siehe Ende)
+aufraeumen(){ [ "${LAUF_FERTIG:-0}" = "1" ] && [ "$STOP_NACH_LAUF" = "0" ] && return 0
+              su postgres -c "$PGBIN/pg_ctl -D $DATA stop" >/dev/null 2>&1 || true; }
+trap aufraeumen EXIT
 
 PSQL="psql -h /tmp -p $PORT -U crm -d crmdemo -v ON_ERROR_STOP=1 -q"
 psql -h /tmp -p "$PORT" -U crm -d postgres -qc "CREATE DATABASE crmdemo;"
@@ -55,6 +68,13 @@ echo
 echo "==> Testsuite"
 psql -h /tmp -p "$PORT" -U crm -d crmdemo -P pager=off -P border=2 -q -f "$HIER/04_pruefungen.sql"
 
+LAUF_FERTIG=1
 echo
-echo "Fertig. Die Instanz wird beim Verlassen des Skripts wieder gestoppt."
-echo "Zum Weiterarbeiten:  psql -h /tmp -p $PORT -U crm -d crmdemo"
+if [ "$STOP_NACH_LAUF" = "1" ]; then
+  su postgres -c "$PGBIN/pg_ctl -D $DATA stop" >/dev/null 2>&1 || true
+  echo "Fertig. Die Instanz wurde beendet."
+else
+  echo "Fertig. Die Instanz laeuft weiter auf Port $PORT."
+  echo "  Weiterarbeiten:  psql -h /tmp -p $PORT -U crm -d crmdemo"
+  echo "  Beenden:         su postgres -c \"$PGBIN/pg_ctl -D $DATA stop\""
+fi
