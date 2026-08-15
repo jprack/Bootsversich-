@@ -6,26 +6,64 @@ Handlungen erzeugt — und nicht nur behauptet, es zu tun.
 
 ## Ausführen
 
+### Voraussetzung
+
+PostgreSQL ≥ 15 — mindestens die Clientwerkzeuge (`psql`).
+
+```
+macOS            brew install postgresql@16
+Debian/Ubuntu    sudo apt install postgresql-16
+Windows          über den Installer von postgresql.org, dann in der Git-Bash oder WSL arbeiten
+```
+
+### Weg 1 — gegen eine eigene Datenbank (funktioniert überall)
+
+Am schnellsten mit Docker, es geht aber jede erreichbare PostgreSQL-Datenbank:
+
 ```bash
-./run_demo.sh                 # Standardport 55432, Instanz bleibt danach offen
+docker run --name crmdemo -e POSTGRES_PASSWORD=geheim -e POSTGRES_DB=crmdemo \
+       -p 5432:5432 -d postgres:16
+
+cd 01_CRM_ENGINE/demo
+./run_demo.sh --db "postgresql://postgres:geheim@localhost:5432/crmdemo"
+```
+
+Die Datenbank muss leer sein; das Skript prüft das und bricht sonst mit einem
+Hinweis ab, statt vorhandene Daten zu überschreiben.
+
+### Weg 2 — temporäre Instanz, ohne eigene Datenbank
+
+Das Skript legt selbst einen kurzlebigen Cluster an. Voraussetzung ist eine
+vollständige PostgreSQL-Installation (`initdb`, `pg_ctl`), nicht nur der Client.
+Nicht als root ausführen — `initdb` lehnt das ab.
+
+```bash
+cd 01_CRM_ENGINE/demo
+./run_demo.sh                 # Port 55432, Instanz bleibt danach geöffnet
 ./run_demo.sh 55555           # abweichender Port
 ./run_demo.sh --stop          # Instanz nach dem Lauf beenden
 ```
 
-Das Skript legt eine temporäre Instanz an, rollt Schema, Demodaten, Engine und
-Kalibrierung aus, führt einen Nachtlauf durch, gibt die erzeugte Tagesliste aus
-und lässt die Testsuite laufen. Danach bleibt die Instanz geöffnet, sodass man
-mit `psql -h /tmp -p 55432 -U crm -d crmdemo` weiterarbeiten kann.
-Voraussetzung: PostgreSQL ≥ 15 lokal installiert (nur Binaries, kein laufender Dienst).
+### Zusätzlicher Lasttest
 
-Nützliche Einstiegspunkte in der laufenden Instanz:
+```bash
+./run_demo.sh --last          # erzeugt 5.009 Leads und 2.010 Kunden, misst Antwortzeiten
+```
+
+Gesamtdauer mit Lasttest rund 20 Sekunden.
+
+### Was Sie danach sehen
+
+Schema, Demodaten, Engine und Kalibrierung sind eingespielt, ein Nachtlauf ist
+durchgeführt. Ausgegeben werden die erzeugte Tagesliste und die Testsuite
+(29 Prüfungen). Anschließend lässt sich frei weiterarbeiten:
 
 ```sql
 SELECT * FROM vw_crm_next_best_action WHERE benutzer_id = '22222222-0000-0000-0000-000000000001';
 SELECT * FROM vw_crm_kunde_360 ORDER BY customer_value_score DESC;
 SELECT * FROM vw_crm_pipeline;
 SELECT * FROM vw_crm_quellen_performance;
-SELECT * FROM vw_crm_vergessene_vorgaenge;          -- muss leer sein
+SELECT * FROM vw_crm_vergessene_vorgaenge;                                 -- muss leer sein
 SELECT * FROM crm_fn_engine_lauf('11111111-0000-0000-0000-000000000001');  -- erneut rechnen
 ```
 
