@@ -69,19 +69,29 @@ SELECT * FROM crm_fn_engine_lauf('11111111-0000-0000-0000-000000000001');  -- er
 
 ## Dateien
 
+Die Engine liegt als **eine** deploybare Datei vor. Die Demo-Dateien enthalten nur
+noch Daten und Prüfungen.
+
 | Datei | Inhalt |
 |---|---|
+| [`../schema/crm_schema.sql`](../schema/crm_schema.sql) | Tabellen, Sichten, Indizes, Row Level Security |
+| [`../schema/crm_engine.sql`](../schema/crm_engine.sql) | **Engine, Fassung 1.3** — Scoring, Mustererkennung, Regelwerk, Lastschutz, Regelkatalog. Einzige maßgebliche Quelle. |
 | `00_seed.sql` | Stammdaten: Mandant, Benutzer, Gebiete, Produkte, 19 Leadquellen mit Kosten, 28 Signaltypen, Partner, 10 Kunden, 17 Boote, 17 Verträge, 3 Schäden |
 | `01_seed_vertrieb.sql` | 9 Leads, 6 Opportunities, 3 Angebote, 13 Aktivitäten, 27 Signale, 4 Empfehlungen, 8 Wiedervorlageregeln |
-| `02_engine.sql` | Intent Score, Lead Score (Regelmodell), Customer Value Score, Risk Score, Aufgabenhelfer mit Duplikatsschutz |
-| `03_regelwerk.sql` | Mustererkennung M1–M8, Next Best Offer, 20 Automatisierungsregeln, Priorisierung, Orchestrierung `crm_fn_engine_lauf()` |
-| `04_pruefungen.sql` | Testsuite mit 24 Prüfungen, davon 5 Negativtests |
-| `05_kalibrierung_v11.sql` | Korrekturen K1–K4 aus dem ersten Lauf |
-| `06_kalibrierung_v12.sql` | Korrekturen K5–K6 (Kundenwert-Normierung, Gewerbezweig) |
+| `04_pruefungen.sql` | Testsuite mit 29 Prüfungen, davon 5 Negativtests und ein Test der Mandantentrennung |
 | `07_lasttest.sql` | Synthetischer Bestand (5.009 Leads, 2.010 Kunden) und Antwortzeitmessung |
-| `08_lastschutz.sql` | K7–K9: Bündelung, Staffelung, Kapazitätswarnung |
-| `09_fixes_v13.sql` | D1–D4: Defekte, die erst unter Last sichtbar wurden |
 | `run_demo.sh` | Alles zusammen, ein Befehl |
+| [`historie/`](historie/README.md) | Entstehungsgeschichte 1.0 → 1.3. Nicht Teil der Auslieferung, dient dem Nachweis, welcher Fehler wann auffiel. |
+
+### Neuen Mandanten einrichten
+
+```sql
+-- Nach crm_schema.sql und crm_engine.sql:
+SELECT crm_fn_regelkatalog_anlegen('<mandant-uuid>');   -- legt A-01 bis A-49 an
+```
+
+Ohne den Regelkatalog schreibt die Engine kein Laufprotokoll und die Regeln lassen
+sich nicht einzeln abschalten.
 
 ## Der Demobestand
 
@@ -178,11 +188,21 @@ verloren" der Kernsatz des Moduls ist) und **K9** (Überlast, die nach Bündelun
 Staffelung bleibt, wird als Kapazitätswarnung an die Teamleitung eskaliert, statt
 in einer Warteschlange zu verschwinden).
 
+### Optimierungen
+
+| Code | Optimierung | Wirkung |
+|---|---|---|
+| **O1** | Der Duplikatsschutz lief in einen Seq Scan. Die mit D1 eingeführte Bedingung `bezug_id IS NOT DISTINCT FROM …` ist nicht indexfähig. Die Abfrage ist jetzt in zwei indexfähige Zweige zerlegt. | **3,9 ms → 0,019 ms** je Prüfung, 1.725 → 3 gelesene Blöcke. Regelwerk-Schritt **6,1 s → 1,7 s**, Nachtlauf **13,9–16,6 s → 9,1–11,7 s** (je 3–4 Wiederholungen auf dem Lastbestand). |
+| **O2** | Fünf fehlende Indizes für Zugriffe, die erst mit Regelwerk und Lastschutz entstanden sind. | Teil der oben gemessenen Verbesserung. |
+| **O3** | Engine aus sechs einander überschreibenden Dateien zu einer deploybaren Fassung konsolidiert. | Eine Quelle statt sechs. Auslieferung ist `crm_schema.sql` + `crm_engine.sql`. |
+| **O4** | Regelkatalog A-01…A-49 war Demodaten, ist jetzt Betriebskonfiguration (`crm_fn_regelkatalog_anlegen`). | Ohne ihn protokollierte die Engine nichts — fiel erst auf, als die konsolidierte Fassung allein geprüft wurde. |
+| **O5** | Konzeptdokumente mit dem geprüften Code in Übereinstimmung gebracht. | 03, 04, 07 und 10 beschrieben noch den Stand vor allen Korrekturen. |
+
 ### Stand nach Fassung 1.3
 
 - **29 von 29 Prüfungen bestanden** — im Demobestand *und* gegen 5.009 Leads.
-- **Idempotent:** Wiederholte Nachtläufe verändern weder Aufgaben- noch Chancenzahl
-  (Demobestand 38/11, Lastbestand 7.027/1.233 über mehrere Läufe konstant).
+- **Idempotent:** Sechs Nachtläufe hintereinander verändern nichts — Demobestand
+  konstant bei 38 Aufgaben und 11 Cross-Sell-Chancen, Vergessensquote 0.
 - Lastschutz bündelt 4.962 gleichartige Aufgaben zu 9 Sammelaufgaben; die
   verbleibenden 399 sind SLA-gebunden und werden bewusst nicht verschoben, sondern
   eskaliert.

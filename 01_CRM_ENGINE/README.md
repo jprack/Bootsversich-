@@ -104,7 +104,8 @@ anschlussfähig, prüfbar und nicht widersprüchlich ist, gilt:
 | [`12_KPIS.md`](12_KPIS.md) | 12 | Kennzahlendefinitionen, Formeln, Zielwerte |
 | [`13_ROADMAP.md`](13_ROADMAP.md) | 13 | Phasen, Lieferobjekte, Abnahmekriterien |
 | [`14_UX_KONZEPT.md`](14_UX_KONZEPT.md) | 14 | Screens, Interaktion, Mobile, Barrierefreiheit |
-| [`schema/crm_schema.sql`](schema/crm_schema.sql) | 8 | Ausführbares PostgreSQL-DDL |
+| [`schema/crm_schema.sql`](schema/crm_schema.sql) | 8 | Ausführbares PostgreSQL-DDL: Tabellen, Sichten, Indizes, RLS |
+| [`schema/crm_engine.sql`](schema/crm_engine.sql) | 3–10 | Ausführbare Engine, Fassung 1.3: Scoring, Mustererkennung, Regelwerk, Lastschutz, Regelkatalog |
 | [`api/openapi_crm.yaml`](api/openapi_crm.yaml) | 9 | OpenAPI 3.1 Spezifikation |
 | [`demo/`](demo/README.md) | — | Lauffähige Demo mit Engine, Demobestand und Testsuite (`run_demo.sh`) |
 

@@ -93,7 +93,8 @@ CODE | AUSLÖSER (Event | Zeitplan | Schwellwert) | BEDINGUNG | AKTIONEN | EMPF�
 | **A-45** | `crm.kontakt.consent_widerrufen` | – | Rohsignale binnen 72 h löschen, aus allen Strecken entfernen, Score auf Regelbasis ohne Verhalten, Sperrvermerk |
 | **A-46** | Zeitplan täglich 05:00 | – | Score-Neuberechnung: Lead Score (alle aktiven), Engagement, Risk (Bestandskunden), CVS-Blöcke B/C/D |
 | **A-47** | Zeitplan monatlich (1. des Monats) | – | CVS-Blöcke A/E, Monatssnapshot `crm_kunde_score_historie`, VIP-Prüfung mit Hysterese |
-| **A-48** | Zeitplan täglich 07:00 | – | Tagesliste je Benutzer berechnen, Prioritäts-Scores aktualisieren, Tageslimit anwenden, Bündelung durchführen |
+| **A-48** | Zeitplan täglich 07:00 | – | Tagesliste je Benutzer berechnen, Prioritäts-Scores aktualisieren, Bündelung und Staffelung anwenden |
+| **A-49** | Nach A-48 | Heute fällige Aufgaben je Benutzer > Tageslimit trotz Bündelung und Staffelung | Eskalation `kritisch` an die Teamleitung mit Anzahl, SLA-gebundenem Anteil, bereits verletzten SLA und gefährdetem Potenzial. Überlast wird sichtbar gemacht, nicht zurückgestaut. |
 
 ---
 

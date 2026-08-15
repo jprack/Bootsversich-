@@ -38,6 +38,7 @@ den es gibt.
 | `boot_wert_eur` | numeric(14,2) | stärkster statischer Scoretreiber |
 | `boot_baujahr` | int | Alter beeinflusst Deckungs- und Beratungsbedarf |
 | `motorleistung_kw` | numeric | relevant für Tarifierung |
+| `anzahl_objekte` | int | Flottengröße. Bei > 1 ist `boot_wert_eur` der **Gesamtwert**. Entscheidet über den Bewertungszweig (siehe 4.2). |
 | `liegeplatz_land`, `liegeplatz_marina` | Text | Partner-/Netzwerkverknüpfung |
 | `fahrgebiet` | Enum | `binnen`, `kuestennah`, `nord_ostsee`, `mittelmeer`, `atlantik`, `weltweit` |
 | `nutzungsart` | Enum | `privat`, `gewerblich_charter`, `gewerblich_flotte`, `regatta`, `verein` |
@@ -130,6 +131,21 @@ Provisionsrelevanz richtet sich nach Last Touch, die Budgetsteuerung nach Multi-
 
 Der Lead Score ist **hybrid** — bewusst, weil ein reines ML-Modell zum Start
 keine Trainingsdaten hat und Vertriebsteams einem nicht erklärbaren Score nicht folgen.
+
+> **Zwei Bewertungszweige.** Ein Privatkunde und eine Chartergesellschaft werden
+> nicht nach denselben Gewichten bewertet. Der Zweig ergibt sich aus
+> `nutzungsart LIKE 'gewerblich%'`, `bedarfsart IN ('flotte','charter')`,
+> `unternehmerstatus` oder `anzahl_objekte >= 3`:
+>
+> | Block | Privat | Gewerbe |
+> |---|---|---|
+> | A Objekt und Wert | 30 | **45** (inkl. Flottengröße) |
+> | B Profil und Region | 20 | **25** |
+> | C Verhalten | 35 | **15** |
+> | D Vertrauen und Netzwerk | 15 | 15 |
+>
+> Begründung: Der Wert eines Flottenkunden steckt in der Flotte, nicht in der
+> Rumpflänge — und er entscheidet im Termin, nicht auf der Website.
 
 ```
 score_final = round( w_r · score_regel  +  w_m · (100 · p_konversion) )   [0..100]
@@ -243,6 +259,30 @@ mit einem Zeitfaktor multipliziert:
 
 Ergebnis wird auf 100 gekappt.
 
+### 4.3b Normierung auf erreichbare Punkte
+
+Ein Lead, den eine Werft telefonisch übergibt, erzeugt niemals Websitebesuche
+oder Newsletterklicks. Würden diese Punkte einfach fehlen, verlöre er sie, ohne
+je die Chance gehabt zu haben, sie zu erreichen — und genau die Quellen mit der
+höchsten Abschlussquote würden systematisch abgewertet.
+
+Deshalb wird nicht auf 100 normiert, sondern auf die **erreichbaren** Punkte:
+
+```
+score_basis = 100 · (A + B + C + D + Bonus) / (max_A + max_B + C_erreichbar + max_D + Bonus_max)
+```
+
+`C_erreichbar` summiert nur die Teilbudgets, für die überhaupt ein Kanal existiert:
+
+| Teilbudget | Anteil an Block C | Erreichbar, wenn |
+|---|---|---|
+| Websitebesuche, Klick, Download | 18/35 | Kontakt hat eine Tracking-Kennung |
+| Newsletterreaktionen | 5/35 | Einwilligung für E-Mail liegt vor |
+| Termine, Antwortverhalten | 12/35 | Erstkontakt hat stattgefunden |
+
+Die Erklärung im Frontend weist die Normierung offen aus, zum Beispiel:
+*„Normierung: 23 von 35 Verhaltenspunkten erreichbar (kein Erstkontakt)".*
+
 ### 4.4 Zeitverfall (Decay)
 
 Verhaltenspunkte (Block C) verfallen, statische Punkte (Block A/B) nicht.
@@ -269,6 +309,13 @@ um ≥ 3 Punkte. Das verhindert tägliches Springen zwischen A und B.
 
 **Eskalationsregel:** Wechsel von B/C nach A erzeugt sofort Aufgabe **und** Push-Benachrichtigung
 an den Verantwortlichen (A-06). Das ist der wichtigste Echtzeit-Trigger des Systems.
+
+> **Kalibrierungshinweis.** Die Gewichte in 4.2 und die Kategoriegrenzen sind gegen
+> einen konstruierten Bestand geprüft, nicht gegen reale Abschlussdaten. Vor dem
+> Produktivgang sind sie an der tatsächlichen Verteilung nachzuziehen; das
+> Vorgehen steht in 12.7. Der geprüfte Stand liefert im Demobestand: A-Lead bei
+> Werftübergabe mit 380.000 € (Score 84), B-Lead bei Flottenanfrage mit
+> 890.000 € und vier Booten (Score 61).
 
 ### 4.6 KI-Komponente
 

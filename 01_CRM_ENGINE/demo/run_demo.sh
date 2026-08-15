@@ -49,6 +49,7 @@ done
 
 HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCHEMA="$HIER/../schema/crm_schema.sql"
+ENGINE="$HIER/../schema/crm_engine.sql"
 
 if ! command -v psql >/dev/null 2>&1; then
   echo "psql wurde nicht gefunden. Bitte PostgreSQL-Clientwerkzeuge installieren:"
@@ -146,19 +147,11 @@ fi
 PSQL=("${PSQL_BASIS[@]}" -v ON_ERROR_STOP=1 -q)
 
 echo "==> Schema"                 && "${PSQL[@]}" -f "$SCHEMA"
+echo "==> Engine (Fassung 1.3)"   && "${PSQL[@]}" -f "$ENGINE"
 echo "==> Demodaten (Stammdaten)" && "${PSQL[@]}" -f "$HIER/00_seed.sql"
 echo "==> Demodaten (Vertrieb)"   && "${PSQL[@]}" -f "$HIER/01_seed_vertrieb.sql"
-echo "==> Engine"                 && "${PSQL[@]}" -f "$HIER/02_engine.sql"
-echo "==> Regelwerk"              && "${PSQL[@]}" -f "$HIER/03_regelwerk.sql"
-echo "==> Kalibrierung 1.1"       && "${PSQL[@]}" -f "$HIER/05_kalibrierung_v11.sql"
-echo "==> Kalibrierung 1.2"       && "${PSQL[@]}" -f "$HIER/06_kalibrierung_v12.sql"
-echo "==> Lastschutz"             && "${PSQL[@]}" -f "$HIER/08_lastschutz.sql"
-echo "==> Fassung 1.3"            && "${PSQL[@]}" -f "$HIER/09_fixes_v13.sql"
-
-# Übergangsfassung des Aufgabenhelfers entfernen (14 statt 15 Parameter)
-"${PSQL_BASIS[@]}" -qAt -c \
-  "SELECT 'DROP FUNCTION '||oid::regprocedure||';' FROM pg_proc WHERE proname='crm_fn_aufgabe' AND pronargs=14;" \
-  | "${PSQL_BASIS[@]}" -q
+echo "==> Regelkatalog"           && "${PSQL[@]}" -c \
+     "SELECT crm_fn_regelkatalog_anlegen('11111111-0000-0000-0000-000000000001');"
 
 echo
 echo "==> Nachtlauf der Engine"

@@ -169,8 +169,10 @@ Ein System, das 60 Aufgaben pro Tag erzeugt, wird ignoriert. Deshalb:
 
 | Schutzmechanismus | Regel |
 |---|---|
-| **Tageslimit** | Max. 25 automatisch erzeugte Aufgaben je Benutzer und Tag. Überzählige werden nach `prio_score` auf Folgetage verteilt. |
-| **Bündelung** | Gleichartige Aufgaben niedriger Priorität (z. B. 12 Geburtstage) werden zu **einer** Sammelaufgabe mit Liste gebündelt. |
+| **Bündelung** (Schritt 1) | Ab 6 gleichartigen Aufgaben je Benutzer, Regel und Typ mit Priorität `normal`/`niedrig` entsteht **eine** Sammelaufgabe mit Checkliste. Die Einzelaufgaben bleiben offen und verknüpft — das Versprechen V1 gilt weiter —, verlassen aber die Tagesliste. |
+| **Staffelung** (Schritt 2) | Was danach über 25 heute fälligen Aufgaben liegt, wird nach `prio_score` auf Folgetage verteilt. |
+| **Unantastbar** | Aufgaben mit Priorität `kritisch` und Aufgaben mit SLA-Frist werden **weder gebündelt noch verschoben**. Sonst versteckte der Lastschutz genau die Fälle, für die das System gebaut ist. |
+| **Kapazitätswarnung** | Bleibt die Zahl danach über dem Limit, ist das kein Systemfehler, sondern ein Kapazitätsproblem. Regel **A-49** erzeugt eine Eskalation an die Teamleitung mit Anzahl, SLA-Anteil und gefährdetem Potenzial — statt eines stillen Rückstaus. |
 | **Ruhezeiten** | Keine Benachrichtigungen 20:00–07:00 und an Wochenenden (außer Eskalation Stufe 2). |
 | **Urlaubsvertretung** | Bei Abwesenheit automatische Umleitung an Vertretung; kritische Aufgaben zusätzlich an Teamleitung. |
 | **Regelqualität** | Regel mit `verworfen`-Quote > 30 % über 30 Tage → automatische Meldung an den CRM-Verantwortlichen zur Nachschärfung (A-42). |

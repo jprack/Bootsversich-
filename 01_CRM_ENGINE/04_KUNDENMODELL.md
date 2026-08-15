@@ -73,17 +73,32 @@ Priorität in der Tagesliste, VIP-Status und Eskalationsstufe.
 
 ### 4.3.2 Gewichtungsmodell (0–100)
 
+Die Euro-Schwellen sind auf Boots- und Yachtprämien kalibriert: privat typischerweise
+200–3.000 €, gewerblich 3.000–20.000 €. Schwellen aus einem Industrieportfolio hätten
+den gesamten Bestand in die unteren Betreuungsstufen gedrückt.
+
 | Block | Kriterium | Punkte | Berechnung |
 |---|---|---|---|
-| **A Wirtschaft (45)** | Jahresumsatz / Jahresprämie | 0–25 | ≥ 15.000 €: 25 · 8.000–14.999 €: 20 · 4.000–7.999 €: 15 · 1.500–3.999 €: 10 · 500–1.499 €: 6 · < 500 €: 2 |
-| | Lifetime Value (kumuliert) | 0–20 | ≥ 100.000 €: 20 · 50.000–99.999 €: 16 · 20.000–49.999 €: 12 · 5.000–19.999 €: 7 · < 5.000 €: 3 |
-| **B Vertrieb (15)** | Abschlussquote (Angebote → Verträge) | 0–10 | ≥ 80 %: 10 · 60–79 %: 8 · 40–59 %: 5 · 20–39 %: 3 · < 20 %: 1 |
+| **A Wirtschaft (55)** | Jahresprämie | 0–30 | ≥ 10.000 €: 30 · 5.000–9.999 €: 25 · 2.500–4.999 €: 19 · 1.200–2.499 €: 13 · 500–1.199 €: 8 · > 0: 4 |
+| | Lifetime Value (kumuliert) | 0–25 | ≥ 60.000 €: 25 · 25.000–59.999 €: 20 · 10.000–24.999 €: 15 · 3.000–9.999 €: 9 · > 0: 4 |
+| **B Vertrieb (15)** | Abschlussquote (Angebote → Verträge) | 0–10 | ≥ 80 %: 10 · 60–79 %: 8 · 40–59 %: 5 · 20–39 %: 3 · < 20 %: 1 · ohne Historie: 3 |
 | | Vertragsdichte (Verträge je Boot) | 0–5 | ≥ 3: 5 · 2: 3 · 1: 1 |
-| **C Netzwerk (20)** | Erfolgreiche Empfehlungen | 0–20 | ≥ 5: 20 · 3–4: 16 · 2: 12 · 1: 8 · 0 (aber angefragt): 2 |
-| **D Community (10)** | Academy, Events, Regatta, Marketplace, Testimonials | 0–10 | ≥ 4 Aktivitäten/Jahr: 10 · 2–3: 6 · 1: 3 · 0: 0 |
-| **E Partner (10)** | Kunde ist zugleich Partner (Werft, Marina, Händler, Club) | 0–10 | aktiver Partner mit Zuführung: 10 · Partner ohne Zuführung: 5 · kein Partner: 0 |
+| **C Netzwerk (15)** | Erfolgreiche Empfehlungen | 0–15 | ≥ 5: 15 · 3–4: 12 · 2: 9 · 1: 6 · 0 (aber ausgesprochen): 3 |
+| **D Community (5)** | Academy, Events, Regatta, Marketplace | 0–5 | ≥ 4 Aktivitäten/Jahr: 5 · 2–3: 3 · 1: 2 · 0: 0 |
+| **E Partner (10)** | Kunde ist zugleich Partner (Werft, Marina, Händler, Club) | 0–10 | aktiver Partner mit Zuführung: 10 · Partner ohne Zuführung: 5 |
 
-**Modifikatoren (additiv, nach Summenbildung, Ergebnis auf 0–100 gekappt):**
+**Normierung auf erreichbare Punkte.** Block E ist nur für Kunden erreichbar, die
+selbst Partner sind — für den weit überwiegenden Teil des Bestands liegt er sonst als
+totes Gewicht im Nenner und macht die oberen Stufen rechnerisch unerreichbar. Deshalb:
+
+```
+cvs = 100 · (A + B + C + D + E) / (55 + 15 + 15 + 5 + (10 falls Partner)) + Modifikatoren
+```
+
+Dieselbe Mechanik wie beim Lead Score (siehe 03_LEADMODELL.md 4.3b): Fehlt ein Kanal
+strukturell, schrumpft der Nenner statt des Zählers.
+
+**Modifikatoren (additiv nach der Normierung, Ergebnis auf 0–100 gekappt):**
 
 | Modifikator | Effekt |
 |---|---|
@@ -92,7 +107,7 @@ Priorität in der Tagesliste, VIP-Status und Eskalationsstufe.
 | Zahlungsverzug > 60 Tage offen | −10 |
 | Schadenquote > 120 % (3-Jahres-Sicht) | −8 |
 | ≥ 2 Beschwerden in 12 Monaten | −6 |
-| Strategisches Segment (Flotte ≥ 5 Boote, Werft-Multiplikator) | +8 |
+| Strategisches Segment (Flotte ≥ 5 Boote) | +8 |
 
 ### 4.3.3 Kategorien und Betreuungsmodell
 
@@ -121,29 +136,40 @@ der Kunde kündigt zur Hauptfälligkeit. Deshalb misst dieses Modul **Stille**.
 
 ### 4.4.2 Risikomerkmale
 
+Das Modell trennt **Verhaltensmerkmale** (bilden die Bewertungsbasis) von
+**harten Ereignissen** (wirken als Eskalatoren). Grund: Zahlungsverzug, Bootsverkauf
+und Teilkündigung treten selten gleichzeitig mit Stille auf. Lägen sie im Nenner,
+könnte ein Kunde jedes Stille-Kriterium erfüllen und bliebe dennoch unter der
+Alarmschwelle — genau der Fall, für den dieses Modul gebaut ist.
+
+**Verhaltensmerkmale (Nenner, Summe 70):**
+
 | Code | Merkmal | Gewicht | Schwelle |
 |---|---|---|---|
-| `R-01` | Tage seit letztem beidseitigen Kontakt | 20 | > 270 Tage = voll |
-| `R-02` | Rückgang Engagement Score gegenüber Vorjahr | 15 | Rückgang > 50 % = voll |
-| `R-03` | Keine Newsletteröffnung bei ≥ 6 Sendungen | 8 | erfüllt = voll |
-| `R-04` | Schadenregulierung mit niedriger Zufriedenheit | 12 | Bewertung ≤ 2/5 = voll |
-| `R-05` | Beschwerde in den letzten 12 Monaten | 10 | ≥ 1 = voll |
+| `R-01` | Tage seit letztem beidseitigen Kontakt | 20 | linear bis 270 Tage |
+| `R-03` | Keine Newsletterreaktion in 12 Monaten | 8 | erfüllt = voll |
+| `R-04` | Schadenregulierung mit Zufriedenheit ≤ 2/5 | 12 | erfüllt = voll |
+| `R-05` | Beschwerde in den letzten 12 Monaten | 10 | erfüllt = voll |
 | `R-06` | Prämienerhöhung > 15 % zur letzten Hauptfälligkeit | 12 | erfüllt = voll |
-| `R-07` | Zahlungsverzug / Mahnstufe ≥ 2 | 8 | erfüllt = voll |
-| `R-08` | Boot verkauft / abgemeldet ohne Nachfolgeobjekt | 15 | erfüllt = voll |
-| `R-09` | Anfrage von Wettbewerber-Vergleichsportal erkannt | 10 | erfüllt = voll |
-| `R-10` | Vertragsanzahl gesunken (Teilkündigung) | 14 | ≥ 1 Kündigung = voll |
-| `R-11` | Betreuerwechsel in den letzten 6 Monaten | 6 | erfüllt = voll |
 | `R-12` | Jahresgespräch überfällig > 90 Tage | 8 | erfüllt = voll |
-| `R-13` | Kein Login Kundenportal > 12 Monate (falls genutzt) | 5 | erfüllt = voll |
 
 ```
-risk_score = 100 · ( Σ gewicht_i · erfuellungsgrad_i ) / Σ gewicht_max
+risk_basis = 100 · Σ(gewicht · erfuellungsgrad) / 70
 ```
 
-**KI-Uplift:** Survival-Modell (Cox / Gradient Boosted Survival) prognostiziert
-zusätzlich die **Kündigungswahrscheinlichkeit zur nächsten Hauptfälligkeit** und die
-**verbleibende erwartete Bindungsdauer**. Blending analog Lead Score (Phase 1–3).
+**Eskalatoren (heben den Wert unmittelbar auf mindestens 65):**
+
+| Code | Ereignis |
+|---|---|
+| `R-07` | Zahlungsverzug > 30 Tage |
+| `R-08` | Boot verkauft oder abgemeldet, kein Nachfolgeobjekt |
+| `R-10` | Teilkündigung in den letzten 12 Monaten |
+| `R-01+` | **Stiller Rückzug:** kein Kontakt seit über 270 Tagen bei Kundenwert ≥ 35 |
+
+Der letzte Eskalator ist der wichtigste. Stille allein stellt nur 28 der 70
+Verhaltenspunkte; ohne ihn erreichte ein Kunde, der seit einem Jahr kein Wort gehört
+hat, höchstens die Stufe „mittel" — und damit keine Rückholaufgabe. Die Grenze von 35
+Kundenwertpunkten sorgt dafür, dass der Rückholaufwand wirtschaftlich bleibt.
 
 ### 4.4.3 Risikostufen und Pflichthandlungen
 

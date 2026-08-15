@@ -5,28 +5,7 @@
 \set M '''11111111-0000-0000-0000-000000000001'''
 
 -- --- Regelkatalog registrieren (Voraussetzung für das Laufprotokoll) ----------
-INSERT INTO crm_automation_regel (mandant_id,code,bezeichnung,ausloeser_typ,ausloeser,aktionen,max_pro_tag_je_benutzer) VALUES
- (:M,'A-01','Vergessenswächter: aktiver Vorgang ohne offene Aufgabe','zeitplan','0 6 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-02','Erstkontakt neuer Lead mit SLA','event','crm.lead.erstellt','[{"typ":"aufgabe"},{"typ":"email"}]',25),
- (:M,'A-05','SLA Erstkontakt überschritten','zeitplan','0 * * * *','[{"typ":"eskalation"}]',NULL),
- (:M,'A-08','Lead ohne Signal > 180 Tage in Nurturing','zeitplan','0 2 * * *','[{"typ":"kampagne"}]',NULL),
- (:M,'A-09','Konfigurator abgebrochen (Muster M2)','event','crm.signal.muster_erkannt','[{"typ":"aufgabe"}]',25),
- (:M,'A-11','Angebotsnachfassung T+3','event','crm.angebot.versendet','[{"typ":"aufgabe"}]',25),
- (:M,'A-12','Angebot läuft in 3 Tagen ab','zeitplan','0 6 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-14','Opportunity ohne offene Aufgabe','zeitplan','0 6 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-15','Stillstand in der Pipelinestufe','zeitplan','0 6 * * *','[{"typ":"eskalation"}]',NULL),
- (:M,'A-16','Angebot mehrfach geöffnet (Muster M6)','event','crm.angebot.geoeffnet','[{"typ":"aufgabe"}]',25),
- (:M,'A-21','Hauptfälligkeit T-90/T-60/T-30','zeitplan','0 6 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-22','Jahresgespräch fällig','zeitplan','0 6 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-23','Bootswert seit > 24 Monaten ungeprüft','zeitplan','0 2 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-24','Kündigungsrisiko hoch','schwellwert','risk_score>=65','[{"typ":"aufgabe"}]',NULL),
- (:M,'A-25','Kündigungsrisiko hoch bei hohem Kundenwert','schwellwert','risk>=65 AND cvs>=70','[{"typ":"aufgabe"},{"typ":"email"},{"typ":"push"}]',NULL),
- (:M,'A-28','Empfehlungsanfrage bei zufriedenen Kunden','zeitplan','0 6 1 * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-30','Next Best Offer','zeitplan','0 2 * * *','[{"typ":"opportunity"},{"typ":"aufgabe"}]',25),
- (:M,'A-34','Empfehlung eingegangen','event','crm.empfehlung.eingegangen','[{"typ":"aufgabe"}]',NULL),
- (:M,'A-35','Empfehlung ohne Rückmeldung an den Geber','zeitplan','0 6 * * *','[{"typ":"aufgabe"}]',25),
- (:M,'A-37','Partnerkontakt überfällig','zeitplan','0 6 1 * *','[{"typ":"aufgabe"}]',25)
-ON CONFLICT (mandant_id, code) DO NOTHING;   -- Skript muss wiederholbar sein
+SELECT crm_fn_regelkatalog_anlegen(:M);   -- Skript muss wiederholbar sein
 
 -- =============================================================================
 --  MUSTERERKENNUNG M1 - M8
