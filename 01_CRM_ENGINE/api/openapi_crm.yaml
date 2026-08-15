@@ -1,0 +1,870 @@
+openapi: 3.1.0
+info:
+  title: Callidus Boat Intelligence Platform — CRM Engine API
+  version: 1.0.0
+  description: |
+    Modul 01_CRM_ENGINE. Beziehungs- und Vertriebsmanagement für Boots- und
+    Yachtversicherung. Feldnamen und Enum-Werte sind deckungsgleich mit dem
+    Datenmodell (siehe schema/crm_schema.sql).
+
+    Fachliche Kernregeln, die die API erzwingt:
+      * Aktivitäten mit Folgeaktion != "keine" benötigen folgeaktion_am (422).
+      * Opportunities benötigen bei "gewonnen"/"verloren" einen Grund (422).
+      * Leads benötigen bei Disqualifikation einen Grund (422).
+      * Automatikaufgaben sind je (Bezug, Typ, Regel) eindeutig (409).
+  contact:
+    name: Callidus CRM Engine
+  license:
+    name: proprietär
+
+servers:
+  - url: https://api.callidus.example/api/v1/crm
+    description: Produktion
+  - url: https://api-test.callidus.example/api/v1/crm
+    description: Test
+
+security:
+  - oauth2: [crm.read, crm.write]
+
+tags:
+  - name: Leads
+  - name: Kunden
+  - name: Opportunities
+  - name: Angebote
+  - name: Aktivitäten
+  - name: Aufgaben
+  - name: Empfehlungen
+  - name: Partner
+  - name: Signale
+  - name: Dashboard
+
+paths:
+  /leads:
+    get:
+      tags: [Leads]
+      summary: Leads auflisten
+      parameters:
+        - { name: 'filter[status]', in: query, schema: { $ref: '#/components/schemas/LeadStatus' } }
+        - { name: 'filter[kategorie]', in: query, schema: { $ref: '#/components/schemas/LeadKategorie' } }
+        - { name: 'filter[quelle_code]', in: query, schema: { type: string } }
+        - { name: 'filter[verantwortlicher_id]', in: query, schema: { type: string, format: uuid } }
+        - { name: 'filter[score_min]', in: query, schema: { type: integer, minimum: 0, maximum: 100 } }
+        - { $ref: '#/components/parameters/Sort' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Trefferliste
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  daten: { type: array, items: { $ref: '#/components/schemas/Lead' } }
+                  seite: { $ref: '#/components/schemas/Seiteninfo' }
+    post:
+      tags: [Leads]
+      summary: Lead anlegen (mit Dublettenprüfung, Scoring, Zuweisung)
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LeadAnlegen' }
+      responses:
+        '201':
+          description: Lead angelegt
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LeadAntwort' }
+        '409': { $ref: '#/components/responses/Konflikt' }
+        '422': { $ref: '#/components/responses/Fachfehler' }
+
+  /leads/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Leads]
+      summary: Lead lesen
+      responses:
+        '200':
+          description: Lead
+          content: { application/json: { schema: { $ref: '#/components/schemas/LeadAntwort' } } }
+        '404': { $ref: '#/components/responses/NichtGefunden' }
+    patch:
+      tags: [Leads]
+      summary: Lead teilweise aktualisieren
+      parameters: [ { $ref: '#/components/parameters/IfMatch' } ]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Lead' } } }
+      responses:
+        '200':
+          description: Aktualisiert
+          content: { application/json: { schema: { $ref: '#/components/schemas/LeadAntwort' } } }
+        '409': { $ref: '#/components/responses/Konflikt' }
+
+  /leads/{id}/qualifizieren:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Leads]
+      summary: Lead qualifizieren (prüft BOOT-Kriterien)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bedarf_bestaetigt, objekt_bekannt, entscheider_zugang, zeitfenster]
+              properties:
+                bedarf_bestaetigt: { type: boolean }
+                objekt_bekannt: { type: boolean }
+                entscheider_zugang: { type: boolean }
+                zeitfenster: { $ref: '#/components/schemas/Zeitfenster' }
+                notiz: { type: string }
+      responses:
+        '200': { description: Qualifiziert, content: { application/json: { schema: { $ref: '#/components/schemas/LeadAntwort' } } } }
+        '422': { $ref: '#/components/responses/Fachfehler' }
+
+  /leads/{id}/disqualifizieren:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Leads]
+      summary: Lead disqualifizieren (Grund verpflichtend)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [disqualifikationsgrund]
+              properties:
+                disqualifikationsgrund: { $ref: '#/components/schemas/Disqualifikationsgrund' }
+                notiz: { type: string }
+      responses:
+        '200': { description: Disqualifiziert }
+        '422': { $ref: '#/components/responses/Fachfehler' }
+
+  /leads/{id}/konvertieren:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Leads]
+      summary: Lead in Opportunity überführen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [wert_eur, erwartetes_abschlussdatum]
+              properties:
+                name: { type: string }
+                wert_eur: { type: number, format: double }
+                erwartetes_abschlussdatum: { type: string, format: date }
+                produktinteresse: { type: array, items: { type: string } }
+                kunde_anlegen: { type: boolean, default: false }
+      responses:
+        '201': { description: Opportunity erzeugt, content: { application/json: { schema: { $ref: '#/components/schemas/Opportunity' } } } }
+
+  /leads/{id}/score/historie:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Leads]
+      summary: Score-Verlauf
+      responses:
+        '200':
+          description: Verlauf
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    berechnet_am: { type: string, format: date-time }
+                    score: { type: integer }
+                    kategorie: { $ref: '#/components/schemas/LeadKategorie' }
+                    modell_version: { type: string }
+                    erklaerung: { type: array, items: { $ref: '#/components/schemas/ScoreFaktor' } }
+
+  /kunden/{id}/akte:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Kunden]
+      summary: 360-Grad-Kundenakte
+      parameters:
+        - name: bloecke
+          in: query
+          description: Kommaliste der gewünschten Blöcke (Standard alle)
+          schema: { type: string, example: 'stammdaten,boote,vertraege,scores,aufgaben' }
+      responses:
+        '200':
+          description: Kundenakte
+          content: { application/json: { schema: { $ref: '#/components/schemas/Kundenakte' } } }
+
+  /kunden/{id}/scores:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    get:
+      tags: [Kunden]
+      summary: Customer Value, Risiko und Engagement inkl. Erklärung
+      responses:
+        '200':
+          description: Scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer_value_score: { type: integer }
+                  cvs_bloecke:
+                    type: object
+                    properties:
+                      wirtschaft: { type: integer }
+                      vertrieb: { type: integer }
+                      netzwerk: { type: integer }
+                      community: { type: integer }
+                      partner: { type: integer }
+                      modifikatoren: { type: integer }
+                  risk_score: { type: integer }
+                  risiko_stufe: { type: string, enum: [hoch, mittel, niedrig] }
+                  p_kuendigung: { type: number, format: double }
+                  engagement_score: { type: integer }
+                  top_treiber: { type: array, items: { $ref: '#/components/schemas/ScoreFaktor' } }
+
+  /kunden/risiko:
+    get:
+      tags: [Kunden]
+      summary: Kunden mit Kündigungsrisiko
+      parameters:
+        - { name: 'filter[risk_min]', in: query, schema: { type: integer, default: 65 } }
+        - { name: 'filter[cvs_min]', in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Risikoliste
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    kunde_id: { type: string, format: uuid }
+                    bezeichnung: { type: string }
+                    risk_score: { type: integer }
+                    customer_value_score: { type: integer }
+                    jahrespraemie_eur: { type: number }
+                    top_treiber: { type: array, items: { $ref: '#/components/schemas/ScoreFaktor' } }
+                    offene_aufgabe_id: { type: [string, 'null'], format: uuid }
+
+  /opportunities:
+    get:
+      tags: [Opportunities]
+      summary: Opportunities auflisten
+      parameters:
+        - { name: 'filter[pipeline_stufe]', in: query, schema: { $ref: '#/components/schemas/PipelineStufe' } }
+        - { name: 'filter[verantwortlicher_id]', in: query, schema: { type: string, format: uuid } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  daten: { type: array, items: { $ref: '#/components/schemas/Opportunity' } }
+                  seite: { $ref: '#/components/schemas/Seiteninfo' }
+    post:
+      tags: [Opportunities]
+      summary: Opportunity anlegen
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Opportunity' } } }
+      responses:
+        '201': { description: Angelegt, content: { application/json: { schema: { $ref: '#/components/schemas/Opportunity' } } } }
+        '422': { $ref: '#/components/responses/Fachfehler' }
+
+  /opportunities/{id}/stufe:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Opportunities]
+      summary: Pipelinestufe wechseln
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nach_stufe]
+              properties:
+                nach_stufe: { $ref: '#/components/schemas/PipelineStufe' }
+                grund: { type: string }
+                gewinngrund: { $ref: '#/components/schemas/Gewinngrund' }
+                verlustgrund: { $ref: '#/components/schemas/Verlustgrund' }
+                wettbewerber: { type: string }
+                wettbewerbspraemie_eur: { type: number }
+                pausiert_bis: { type: string, format: date }
+      responses:
+        '200': { description: Gewechselt, content: { application/json: { schema: { $ref: '#/components/schemas/Opportunity' } } } }
+        '422': { $ref: '#/components/responses/Fachfehler' }
+
+  /forecast:
+    get:
+      tags: [Opportunities]
+      summary: Forecast (brutto, gewichtet, Commit, Best Case)
+      parameters:
+        - { name: von, in: query, schema: { type: string, format: date } }
+        - { name: bis, in: query, schema: { type: string, format: date } }
+        - { name: team_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Forecast
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pipeline_brutto_eur: { type: number }
+                  forecast_gewichtet_eur: { type: number }
+                  commit_eur: { type: number }
+                  best_case_eur: { type: number }
+                  ziel_eur: { type: number }
+                  coverage: { type: number, description: 'Brutto / Ziel' }
+                  prognosegüte: { type: number }
+                  je_monat:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        monat: { type: string, format: date }
+                        gewichtet_eur: { type: number }
+                        anzahl: { type: integer }
+
+  /aktivitaeten:
+    post:
+      tags: [Aktivitäten]
+      summary: Aktivität erfassen (erzwingt Folgeaktion)
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Aktivitaet' } } }
+      responses:
+        '201':
+          description: Erfasst
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Aktivitaet'
+                  - type: object
+                    properties:
+                      erzeugte_aufgabe_id: { type: [string, 'null'], format: uuid }
+        '422':
+          description: Fachliche Verletzung (z. B. FOLGEAKTION_ERFORDERLICH)
+          content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+
+  /aufgaben/tagesliste:
+    get:
+      tags: [Aufgaben]
+      summary: Next Best Actions des angemeldeten Benutzers
+      parameters:
+        - { name: datum, in: query, schema: { type: string, format: date } }
+        - { name: limit, in: query, schema: { type: integer, default: 25, maximum: 100 } }
+      responses:
+        '200':
+          description: Priorisierte Tagesliste
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datum: { type: string, format: date }
+                  benutzer_id: { type: string, format: uuid }
+                  kapazitaet:
+                    type: object
+                    properties:
+                      offen: { type: integer }
+                      heute_faellig: { type: integer }
+                      ueberfaellig: { type: integer }
+                  aufgaben: { type: array, items: { $ref: '#/components/schemas/AufgabeNBA' } }
+
+  /aufgaben/{id}/erledigen:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    post:
+      tags: [Aufgaben]
+      summary: Aufgabe abschließen (Aktivität wird im selben Aufruf erfasst)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ergebnis, aktivitaet]
+              properties:
+                ergebnis: { $ref: '#/components/schemas/AufgabeErgebnis' }
+                ergebnis_notiz: { type: string }
+                aktivitaet: { $ref: '#/components/schemas/Aktivitaet' }
+      responses:
+        '200':
+          description: Erledigt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aufgabe: { $ref: '#/components/schemas/Aufgabe' }
+                  aktivitaet_id: { type: string, format: uuid }
+                  folgeaufgabe_id: { type: [string, 'null'], format: uuid }
+        '422': { $ref: '#/components/responses/Fachfehler' }
+
+  /empfehlungen:
+    post:
+      tags: [Empfehlungen]
+      summary: Empfehlung erfassen (erzeugt automatisch Lead und Aufgabe)
+      parameters: [ { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/EmpfehlungAnlegen' } } }
+      responses:
+        '201':
+          description: Erfasst
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  empfehlung_id: { type: string, format: uuid }
+                  erzeugter_lead_id: { type: string, format: uuid }
+                  erzeugte_aufgabe_id: { type: string, format: uuid }
+        '422': { $ref: '#/components/responses/Fachfehler' }
+
+  /signale:
+    post:
+      tags: [Signale]
+      summary: Buying Signal aufnehmen (Consent-geprüft)
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Signal' } } }
+      responses:
+        '202':
+          description: Angenommen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signal_id: { type: string, format: uuid }
+                  kontakt_id: { type: [string, 'null'], format: uuid }
+                  intent_score: { type: number }
+                  erkannte_muster: { type: array, items: { type: string } }
+                  ausgeloeste_aktionen: { type: array, items: { type: string } }
+        '403':
+          description: CONSENT_FEHLT
+          content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+
+  /dashboard/vertrieb:
+    get:
+      tags: [Dashboard]
+      summary: Vertriebsdashboard
+      parameters:
+        - { name: benutzer_id, in: query, schema: { type: string, format: uuid } }
+        - { name: team_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Kennzahlen und Listen
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  heisse_leads: { type: array, items: { $ref: '#/components/schemas/Lead' } }
+                  offene_opportunities: { type: integer }
+                  pipeline_brutto_eur: { type: number }
+                  forecast_gewichtet_eur: { type: number }
+                  angebote_offen: { type: integer }
+                  angebote_ablaufend_7_tage: { type: integer }
+                  umsatzpotenzial_eur: { type: number }
+                  durchschnitt_abschlusswahrscheinlichkeit: { type: number }
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.callidus.example/oauth2/token
+          scopes:
+            crm.read: Lesezugriff
+            crm.write: Schreibzugriff
+            crm.admin: Verwaltung von Regeln und Katalogen
+
+  parameters:
+    Id:
+      { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    Cursor:
+      { name: cursor, in: query, schema: { type: string } }
+    Limit:
+      { name: limit, in: query, schema: { type: integer, default: 50, maximum: 200 } }
+    Sort:
+      { name: sort, in: query, schema: { type: string, example: '-lead_score' } }
+    IdempotencyKey:
+      { name: Idempotency-Key, in: header, required: true, schema: { type: string, maxLength: 128 } }
+    IfMatch:
+      { name: If-Match, in: header, schema: { type: string } }
+
+  responses:
+    NichtGefunden:
+      description: Nicht gefunden
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+    Konflikt:
+      description: Konflikt (Dublette, Version, bestehende Automatikaufgabe)
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+    Fachfehler:
+      description: Fachliche Regelverletzung
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } }
+
+  schemas:
+    Problem:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code: { type: string, example: FOLGEAKTION_ERFORDERLICH }
+        instance: { type: string }
+        felder:
+          type: array
+          items:
+            type: object
+            properties:
+              feld: { type: string }
+              meldung: { type: string }
+
+    Seiteninfo:
+      type: object
+      properties:
+        naechster_cursor: { type: [string, 'null'] }
+        anzahl: { type: integer }
+        gesamt: { type: [integer, 'null'] }
+
+    ScoreFaktor:
+      type: object
+      properties:
+        faktor: { type: string }
+        punkte: { type: [number, 'null'] }
+        richtung: { type: string, enum: [positiv, negativ, multiplikator] }
+        wert: { type: [number, 'null'] }
+
+    LeadStatus:
+      type: string
+      enum: [neu, in_bearbeitung, kontaktiert, qualifiziert, nurturing, konvertiert, disqualifiziert, dublette]
+    LeadKategorie:
+      type: string
+      enum: [A, B, C, D]
+    Zeitfenster:
+      type: string
+      enum: [sofort, 4_wochen, 3_monate, saison, unklar]
+    Bedarfsart:
+      type: string
+      enum: [neuversicherung, wechsel, zusatzdeckung, bootswechsel, flotte, charter, skipper, transport, winterlager, sonstiges]
+    Fahrgebiet:
+      type: string
+      enum: [binnen, kuestennah, nord_ostsee, mittelmeer, atlantik, weltweit]
+    BootTyp:
+      type: string
+      enum: [segelyacht, motoryacht, sportboot, jolle, katamaran, trawler, rib, hausboot, klassiker, jetski, sonstiges]
+    Disqualifikationsgrund:
+      type: string
+      enum: [kein_bedarf, kein_boot, nicht_erreichbar, falsche_daten, fremdmarkt, nicht_zeichenbar, wettbewerb, widerspruch, dublette, testdaten, sonstiges]
+    PipelineStufe:
+      type: string
+      enum: [neu, in_bearbeitung, angebot, verhandlung, pausiert, gewonnen, verloren]
+    Verlustgrund:
+      type: string
+      enum: [preis, wettbewerbsangebot, bedingungen_deckung, selbstbehalt, kein_bedarf_mehr, boot_nicht_gekauft,
+             boot_verkauft, zeitlich_verschoben, nicht_erreichbar, risiko_nicht_zeichenbar, unterlagen_fehlend,
+             bestandsschutz_beim_wettbewerber, interne_kapazitaet, zeitablauf, sonstiges]
+    Gewinngrund:
+      type: string
+      enum: [beratungsqualitaet, preis, deckungsumfang, schnelligkeit, empfehlung_vertrauen,
+             bestandskundenbindung, partnerbeziehung, spezialloesung, service_schaden, sonstiges]
+    AktivitaetTyp:
+      type: string
+      enum: [email, anruf, termin, meeting, angebot, follow_up, dokument, empfehlung, besuch, notiz, system, kampagne, whatsapp, chat]
+    AktivitaetErgebnis:
+      type: string
+      enum: [erreicht_positiv, erreicht_neutral, erreicht_einwand, erreicht_absage, nicht_erreicht,
+             terminiert, versendet, beantwortet, keine_reaktion, abgeschlossen]
+    Folgeaktion:
+      type: string
+      enum: [anruf, email, termin_vereinbaren, angebot_erstellen, unterlagen_anfordern, wiedervorlage,
+             an_kollegen_uebergeben, opportunity_schliessen, nurturing, keine]
+    AufgabeErgebnis:
+      type: string
+      enum: [erledigt_erfolgreich, erledigt_ohne_erfolg, nicht_erreicht, verschoben, delegiert, verworfen, automatisch_erledigt]
+
+    KontaktKurz:
+      type: object
+      required: [nachname]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        anrede: { type: string, enum: [herr, frau, divers, firma, keine] }
+        titel: { type: string }
+        vorname: { type: string }
+        nachname: { type: string }
+        email: { type: string, format: email }
+        telefon: { type: string, description: 'E.164' }
+        mobil: { type: string }
+        plz: { type: string }
+        ort: { type: string }
+        land: { type: string, default: DE }
+        sprache: { type: string, default: de }
+
+    BootAngabe:
+      type: object
+      properties:
+        typ: { $ref: '#/components/schemas/BootTyp' }
+        laenge_m: { type: number }
+        wert_eur: { type: number }
+        baujahr: { type: integer }
+        motorleistung_kw: { type: number }
+        fahrgebiet: { $ref: '#/components/schemas/Fahrgebiet' }
+        liegeplatz_marina: { type: string }
+        liegeplatz_land: { type: string }
+        nutzungsart: { type: string, enum: [privat, gewerblich_charter, gewerblich_flotte, regatta, verein] }
+
+    ConsentAngabe:
+      type: object
+      properties:
+        email: { type: string, enum: [erteilt, verweigert, unbekannt] }
+        telefon: { type: string, enum: [erteilt, verweigert, unbekannt] }
+        tracking: { type: string, enum: [erteilt, verweigert, unbekannt] }
+        nachweis_quelle: { type: string }
+
+    LeadAnlegen:
+      type: object
+      required: [kontakt, bedarfsart, quelle_code]
+      properties:
+        kontakt: { $ref: '#/components/schemas/KontaktKurz' }
+        bedarfsart: { $ref: '#/components/schemas/Bedarfsart' }
+        beschreibung: { type: string }
+        produktinteresse: { type: array, items: { type: string } }
+        boot: { $ref: '#/components/schemas/BootAngabe' }
+        unternehmerstatus: { type: boolean, default: false }
+        bestehender_versicherer: { type: string }
+        hauptfaelligkeit_bestand: { type: string, format: date }
+        zeitfenster: { $ref: '#/components/schemas/Zeitfenster' }
+        budget_indikation_eur: { type: number }
+        quelle_code: { type: string, example: WERFT }
+        kampagne_id: { type: string, format: uuid }
+        empfehlung_id: { type: string, format: uuid }
+        consent: { $ref: '#/components/schemas/ConsentAngabe' }
+
+    Lead:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        leadnummer: { type: string }
+        kontakt_id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/LeadStatus' }
+        bedarfsart: { $ref: '#/components/schemas/Bedarfsart' }
+        lead_score: { type: integer, minimum: 0, maximum: 100 }
+        lead_kategorie: { $ref: '#/components/schemas/LeadKategorie' }
+        intent_score: { type: number }
+        quelle_code: { type: string }
+        verantwortlicher_id: { type: string, format: uuid }
+        eingegangen_am: { type: string, format: date-time }
+        erstkontakt_faellig_am: { type: string, format: date-time }
+        erstkontakt_am: { type: [string, 'null'], format: date-time }
+        naechster_schritt_am: { type: [string, 'null'], format: date-time }
+        boot_wert_eur: { type: [number, 'null'] }
+        hauptfaelligkeit_bestand: { type: [string, 'null'], format: date }
+
+    LeadAntwort:
+      allOf:
+        - $ref: '#/components/schemas/Lead'
+        - type: object
+          properties:
+            score_erklaerung: { type: array, items: { $ref: '#/components/schemas/ScoreFaktor' } }
+            erzeugte_aufgabe_id: { type: [string, 'null'], format: uuid }
+            dubletten_kandidaten:
+              type: array
+              items:
+                type: object
+                properties:
+                  kontakt_id: { type: string, format: uuid }
+                  aehnlichkeit: { type: number }
+                  grund: { type: string }
+
+    Opportunity:
+      type: object
+      required: [name, wert_eur, erwartetes_abschlussdatum, quelle_code, verantwortlicher_id]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        opportunity_nummer: { type: string, readOnly: true }
+        name: { type: string }
+        kunde_id: { type: [string, 'null'], format: uuid }
+        kontakt_id: { type: [string, 'null'], format: uuid }
+        lead_id: { type: [string, 'null'], format: uuid }
+        boot_ref_id: { type: [string, 'null'], format: uuid }
+        wert_eur: { type: number }
+        wahrscheinlichkeit: { type: integer, minimum: 0, maximum: 100 }
+        produktinteresse: { type: array, items: { type: string } }
+        deckungsumfang: { type: array, items: { type: string } }
+        versicherungssumme_eur: { type: [number, 'null'] }
+        selbstbehalt_eur: { type: [number, 'null'] }
+        fahrgebiet: { $ref: '#/components/schemas/Fahrgebiet' }
+        wettbewerber: { type: [string, 'null'] }
+        wettbewerbspraemie_eur: { type: [number, 'null'] }
+        quelle_code: { type: string }
+        verantwortlicher_id: { type: string, format: uuid }
+        pipeline_stufe: { $ref: '#/components/schemas/PipelineStufe' }
+        stufe_seit: { type: string, format: date-time, readOnly: true }
+        erwartetes_abschlussdatum: { type: string, format: date }
+        naechster_schritt: { type: [string, 'null'] }
+        naechster_schritt_am: { type: [string, 'null'], format: date-time }
+        gewinngrund: { $ref: '#/components/schemas/Gewinngrund' }
+        verlustgrund: { $ref: '#/components/schemas/Verlustgrund' }
+        ursprung: { type: string, enum: [manuell, lead_konversion, buying_signal, next_best_offer, hauptfaelligkeit, empfehlung, partner] }
+
+    Aktivitaet:
+      type: object
+      required: [typ, betreff, ergebnis, folgeaktion]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        typ: { $ref: '#/components/schemas/AktivitaetTyp' }
+        richtung: { type: string, enum: [eingehend, ausgehend, intern], default: ausgehend }
+        kontakt_id: { type: [string, 'null'], format: uuid }
+        kunde_id: { type: [string, 'null'], format: uuid }
+        lead_id: { type: [string, 'null'], format: uuid }
+        opportunity_id: { type: [string, 'null'], format: uuid }
+        betreff: { type: string, maxLength: 200 }
+        inhalt: { type: string }
+        zeitstempel: { type: string, format: date-time }
+        dauer_minuten: { type: [integer, 'null'] }
+        ergebnis: { $ref: '#/components/schemas/AktivitaetErgebnis' }
+        ergebnis_notiz: { type: [string, 'null'] }
+        stimmung: { type: string, enum: [positiv, neutral, negativ] }
+        folgeaktion: { $ref: '#/components/schemas/Folgeaktion' }
+        folgeaktion_am: { type: [string, 'null'], format: date-time }
+        sichtbarkeit: { type: string, enum: [team, vertraulich], default: team }
+      description: |
+        folgeaktion_am ist Pflicht, sobald folgeaktion != "keine".
+        folgeaktion = "keine" ist bei aktiven Leads, offenen Opportunities und
+        Bestandskunden mit CVS >= 35 nicht zulässig (422 FOLGEAKTION_ERFORDERLICH).
+
+    Aufgabe:
+      type: object
+      required: [titel, typ, faellig_am, zugewiesen_an, bezug_typ]
+      properties:
+        id: { type: string, format: uuid, readOnly: true }
+        titel: { type: string }
+        beschreibung: { type: string }
+        typ: { type: string }
+        prioritaet: { type: string, enum: [kritisch, hoch, normal, niedrig] }
+        prioritaets_score: { type: integer, minimum: 0, maximum: 100 }
+        faellig_am: { type: string, format: date-time }
+        sla_frist: { type: [string, 'null'], format: date-time }
+        zugewiesen_an: { type: string, format: uuid }
+        bezug_typ: { type: string, enum: [lead, kunde, kontakt, opportunity, angebot, empfehlung, partner, vertrag_ref, schaden_ref, kein] }
+        bezug_id: { type: [string, 'null'], format: uuid }
+        status: { type: string, enum: [offen, in_arbeit, wartet, erledigt, verworfen, delegiert] }
+        quelle: { type: string, enum: [automatisch, manuell, folgeaktion, eskalation, wiedervorlage] }
+        regel_code: { type: [string, 'null'] }
+        erwarteter_wert_eur: { type: [number, 'null'] }
+        eskalationsstufe: { type: integer, minimum: 0, maximum: 2 }
+
+    AufgabeNBA:
+      allOf:
+        - $ref: '#/components/schemas/Aufgabe'
+        - type: object
+          properties:
+            rang: { type: integer }
+            grund: { type: string, description: 'Klartextbegründung der Priorität' }
+            kontext:
+              type: object
+              properties:
+                kunde_id: { type: [string, 'null'], format: uuid }
+                risk_score: { type: [integer, 'null'] }
+                customer_value_score: { type: [integer, 'null'] }
+                lead_score: { type: [integer, 'null'] }
+                gespraechsaufhaenger: { type: array, items: { type: string } }
+            aktionen: { type: array, items: { type: string } }
+
+    EmpfehlungAnlegen:
+      type: object
+      required: [empfohlener_name]
+      properties:
+        empfehlungsgeber_kontakt_id: { type: string, format: uuid }
+        empfehlungsgeber_kunde_id: { type: string, format: uuid }
+        empfehlungsgeber_partner_id: { type: string, format: uuid }
+        empfohlener_name: { type: string }
+        empfohlener_email: { type: string, format: email }
+        empfohlener_telefon: { type: string }
+        empfohlener_notiz: { type: string }
+        beziehung: { type: string, enum: [familie, freund, crew, stegnachbar, geschaeftlich, verein, sonstige] }
+        anlass: { type: string, enum: [gespraech, event, kampagne, schaden_positiv, abschluss, partnerportal, sonstiges] }
+        boot_angabe: { $ref: '#/components/schemas/BootAngabe' }
+
+    Signal:
+      type: object
+      required: [signal_code, zeitstempel]
+      properties:
+        signal_code: { type: string, example: S-WEB-05 }
+        kontakt_id: { type: [string, 'null'], format: uuid }
+        tracking_id: { type: [string, 'null'] }
+        email: { type: [string, 'null'], format: email, description: 'Alternative Auflösung' }
+        zeitstempel: { type: string, format: date-time }
+        kanal: { type: string }
+        url: { type: string }
+        kampagne_id: { type: [string, 'null'], format: uuid }
+        wert: { type: [number, 'null'] }
+        nutzdaten: { type: object, additionalProperties: true }
+
+    Kundenakte:
+      type: object
+      properties:
+        kunde_id: { type: string, format: uuid }
+        kopf:
+          type: object
+          properties:
+            bezeichnung: { type: string }
+            kundentyp: { type: string }
+            rollen: { type: array, items: { type: string } }
+            betreuungsstufe: { type: string }
+            betreuer_id: { type: string, format: uuid }
+            kunde_seit: { type: string, format: date }
+            jahrespraemie_eur: { type: number }
+            customer_value_score: { type: integer }
+            risk_score: { type: integer }
+            naechste_aktion:
+              type: object
+              properties:
+                aufgabe_id: { type: [string, 'null'], format: uuid }
+                titel: { type: [string, 'null'] }
+                faellig_am: { type: [string, 'null'], format: date-time }
+        stammdaten: { type: object, additionalProperties: true }
+        boote: { type: array, items: { type: object, additionalProperties: true } }
+        kontakte: { type: array, items: { $ref: '#/components/schemas/KontaktKurz' } }
+        vertraege: { type: array, items: { type: object, additionalProperties: true } }
+        dokumente: { type: array, items: { type: object, additionalProperties: true } }
+        schaeden: { type: array, items: { type: object, additionalProperties: true } }
+        aktivitaeten: { type: array, items: { $ref: '#/components/schemas/Aktivitaet' } }
+        opportunities: { type: array, items: { $ref: '#/components/schemas/Opportunity' } }
+        empfehlungen: { type: array, items: { type: object, additionalProperties: true } }
+        aufgaben: { type: array, items: { $ref: '#/components/schemas/Aufgabe' } }
+        scores: { type: object, additionalProperties: true }
+        partnerbeziehungen: { type: array, items: { type: object, additionalProperties: true } }
+        empfehlungen_system:
+          type: array
+          description: 'Systemvorschläge (Next Best Offer, Risikohinweise, Timing)'
+          items:
+            type: object
+            properties:
+              typ: { type: string, enum: [next_best_offer, risiko, timing, empfehlung, datenqualitaet] }
+              text: { type: string }
+              erwarteter_wert_eur: { type: [number, 'null'] }
+              trefferwahrscheinlichkeit: { type: [number, 'null'] }
+              aktion: { type: string }
