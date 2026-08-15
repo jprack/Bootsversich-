@@ -106,6 +106,7 @@ anschlussfähig, prüfbar und nicht widersprüchlich ist, gilt:
 | [`14_UX_KONZEPT.md`](14_UX_KONZEPT.md) | 14 | Screens, Interaktion, Mobile, Barrierefreiheit |
 | [`schema/crm_schema.sql`](schema/crm_schema.sql) | 8 | Ausführbares PostgreSQL-DDL |
 | [`api/openapi_crm.yaml`](api/openapi_crm.yaml) | 9 | OpenAPI 3.1 Spezifikation |
+| [`demo/`](demo/README.md) | — | Lauffähige Demo mit Engine, Demobestand und Testsuite (`run_demo.sh`) |
 
 **Empfohlene Lesereihenfolge:** 01 → 02 → 03 → 05 → 07 → 10 → 08 → 09 → 11 → 13.
 
