@@ -1,0 +1,32 @@
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+# Zugangsdaten und Schlüssel gehören nie ins Repository
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# lokale Daten
+.data/
+tmp/
+*.log
+
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+playwright-report/
+test-results/

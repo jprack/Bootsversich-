@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # Faellt dieser Schritt aus, sind alle weiteren Ergebnisse belanglos:
+  # ein Geheimnis im Verlauf ist auch nach dem Entfernen kompromittiert.
+  secrets:
+    name: Geheimnisse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verlauf auf Geheimnisse pruefen
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  quality:
+    name: Lint, Typen, Tests, Build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: crm-ci
+          POSTGRES_DB: crm
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U crm -d crm"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://crm:crm-ci@localhost:5432/crm?schema=public
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Abhaengigkeiten installieren
+        run: pnpm install --frozen-lockfile
+
+      - name: Beispielkonfiguration uebernehmen
+        run: cp .env.example .env
+
+      - name: Formatierung
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typen
+        run: pnpm typecheck
+
+      - name: Migrationen anwenden
+        run: pnpm db:migrate
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # Eine veraltete Spezifikation ist schlimmer als keine: sie wird geglaubt.
+      - name: OpenAPI-Dokumentation aktuell?
+        run: |
+          pnpm --filter @app/api run openapi:generate
+          if ! git diff --exit-code -- docs/api/openapi.json; then
+            echo "::error::docs/api/openapi.json ist nicht aktuell. Bitte 'pnpm --filter @app/api run openapi:generate' ausfuehren und das Ergebnis einchecken."
+            exit 1
+          fi

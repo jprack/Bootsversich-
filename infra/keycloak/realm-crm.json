@@ -1,0 +1,116 @@
+{
+  "_hinweis": [
+    "Realm-Definition ausschliesslich fuer die lokale Entwicklung.",
+    "Alle hier hinterlegten Kennungen, Geheimnisse und Benutzer sind synthetisch",
+    "und bewusst oeffentlich. Sie duerfen in keiner erreichbaren Umgebung",
+    "verwendet werden. Produktive Werte kommen aus dem Secret Store,",
+    "siehe docs/architecture/security-model.md Abschnitt 8."
+  ],
+  "realm": "crm",
+  "enabled": true,
+  "displayName": "Versicherungs-CRM (lokal)",
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      { "name": "AGENT", "description": "Versicherungsagent: bearbeitet Vorgaenge und gibt Angebote frei" },
+      { "name": "BACK_OFFICE", "description": "Innendienst: bereitet vor, ohne Angebotsfreigabe" },
+      { "name": "ADMIN", "description": "Administration: Benutzer, Produkte, Regeln, Auditeinsicht" },
+      { "name": "CUSTOMER", "description": "Kunde: sieht ausschliesslich eigene Vorgaenge" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "crm-web",
+      "name": "Web-Oberflaeche",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "defaultClientScopes": ["openid", "profile", "email", "roles"]
+    },
+    {
+      "clientId": "crm-api",
+      "name": "API",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": false,
+      "secret": "lokales-entwicklungsgeheimnis-crm-api",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audience-crm-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "crm-api",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "agent",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "agent@beispiel.invalid",
+      "firstName": "Testagent",
+      "lastName": "Synthetisch",
+      "credentials": [{ "type": "password", "value": "agent-lokal", "temporary": false }],
+      "realmRoles": ["AGENT"]
+    },
+    {
+      "username": "innendienst",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "innendienst@beispiel.invalid",
+      "firstName": "Testinnendienst",
+      "lastName": "Synthetisch",
+      "credentials": [{ "type": "password", "value": "innendienst-lokal", "temporary": false }],
+      "realmRoles": ["BACK_OFFICE"]
+    },
+    {
+      "username": "admin-crm",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@beispiel.invalid",
+      "firstName": "Testadministration",
+      "lastName": "Synthetisch",
+      "credentials": [{ "type": "password", "value": "admin-crm-lokal", "temporary": false }],
+      "realmRoles": ["ADMIN"]
+    },
+    {
+      "username": "kundin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "kundin@beispiel.invalid",
+      "firstName": "Testkundin",
+      "lastName": "Synthetisch",
+      "credentials": [{ "type": "password", "value": "kundin-lokal", "temporary": false }],
+      "realmRoles": ["CUSTOMER"]
+    }
+  ]
+}
