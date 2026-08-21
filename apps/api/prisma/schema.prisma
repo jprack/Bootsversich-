@@ -1,0 +1,1248 @@
+// =============================================================================
+//  Datenmodell des Versicherungs-CRM
+//
+//  Leitentscheidungen (docs/architecture/domain-model.md):
+//   - Lead, Person und Vorgang sind getrennte Entitaeten.
+//   - Zentrale CRM-Felder sind relational. Jsonb ausschliesslich fuer
+//     produktspezifische Risikodaten, immer mit gespeicherter Schemaversion.
+//   - Geldbetraege als Decimal(14,2) mit Waehrung. Kein Float.
+//   - Angebotsdaten sind unveraenderlich: Aenderung erzeugt eine neue Version.
+//   - AuditEvent ohne Fremdschluessel, damit Anonymisierung das Protokoll
+//     nicht beschaedigt (ADR-0006).
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+//  Aufzaehlungen
+// -----------------------------------------------------------------------------
+
+enum Country {
+  AT
+  DE
+}
+
+enum RoleName {
+  AGENT
+  BACK_OFFICE
+  ADMIN
+  CUSTOMER
+  SERVICE_ACCOUNT
+}
+
+enum ContactKind {
+  EMAIL
+  PHONE
+}
+
+enum ConsentPurpose {
+  QUOTE_PROCESSING
+  CONTACT_BY_EMAIL
+  CONTACT_BY_PHONE
+  TRANSFER_TO_INSURER
+  MARKETING
+}
+
+enum LegalBasis {
+  CONSENT
+  CONTRACT
+  LEGAL_OBLIGATION
+  LEGITIMATE_INTEREST
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  PHONE
+  EMAIL
+  EVENT
+  PARTNER
+  OTHER
+}
+
+enum LeadStatus {
+  NEW
+  IN_PROGRESS
+  CONVERTED
+  LOST
+}
+
+enum LeadLostReason {
+  NO_RESPONSE
+  NOT_INTERESTED
+  PRICE
+  COMPETITOR
+  NOT_INSURABLE
+  DUPLICATE
+  OTHER
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum CaseStatus {
+  DRAFT
+  DATA_COLLECTION
+  DATA_INCOMPLETE
+  READY_FOR_QUOTE
+  QUOTE_SUBMISSION_PENDING
+  QUOTE_SUBMITTED
+  QUOTE_RECEIVED
+  QUOTE_VALIDATION_PENDING
+  MANUAL_REVIEW_REQUIRED
+  QUOTE_APPROVED
+  SENT_TO_CUSTOMER
+  CUSTOMER_OPENED
+  SIGNATURE_PENDING
+  SIGNED
+  CUSTOMER_DECLINED
+  EXPIRED
+  DOCUMENTS_INCOMPLETE
+  READY_FOR_CALLIDUS
+  CALLIDUS_SUBMISSION_PENDING
+  SUBMITTED_TO_CALLIDUS
+  CALLIDUS_REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProductSchemaStatus {
+  DRAFT
+  APPROVED
+  RETIRED
+}
+
+enum QuoteRequestStatus {
+  DRAFT
+  SUBMITTED
+  ANSWERED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentFrequency {
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+}
+
+enum QuoteOrigin {
+  MOCK
+  MANUAL
+  CALLIDUS_API
+}
+
+enum QuoteApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ValidationOutcome {
+  PASS
+  WARNING
+  FAIL
+  UNKNOWN
+}
+
+enum ValidationSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum HumanDecision {
+  ACCEPTED
+  REJECTED
+  CORRECTED
+}
+
+enum DocumentType {
+  QUOTE_DOCUMENT
+  APPLICATION_FORM
+  SIGNED_APPLICATION
+  IDENTITY_PROOF
+  CUSTOMER_UPLOAD
+  PRIVACY_NOTICE
+  ADVISORY_PROTOCOL
+  EXPORT_PACKAGE
+  OTHER
+}
+
+enum DocumentOrigin {
+  CUSTOMER
+  AGENT
+  SYSTEM
+  CALLIDUS
+  SIGNATURE_PROVIDER
+}
+
+enum ScanStatus {
+  PENDING
+  CLEAN
+  INFECTED
+  FAILED
+}
+
+enum AccessClass {
+  INTERNAL
+  CUSTOMER_VISIBLE
+  RESTRICTED
+}
+
+enum SignatureStatus {
+  CREATED
+  SENT
+  OPENED
+  SIGNED
+  DECLINED
+  EXPIRED
+  CANCELLED
+  FAILED
+}
+
+enum SignatureAssuranceLevel {
+  UNDETERMINED
+  SES
+  AES
+  QES
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum CommunicationChannel {
+  EMAIL
+  PORTAL_MESSAGE
+  SYSTEM_NOTIFICATION
+}
+
+enum CommunicationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  FAILED
+  SUPPRESSED
+}
+
+enum ReminderKind {
+  FIRST_REMINDER
+  SECOND_REMINDER
+  AGENT_TASK
+  ESCALATION_DECISION
+}
+
+enum TransmissionDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum TransmissionChannel {
+  MOCK
+  MANUAL_EXPORT
+  MANUAL_IMPORT
+  API
+}
+
+enum TransmissionStatus {
+  PREPARED
+  IN_PROGRESS
+  CONFIRMED
+  FAILED
+  ABORTED
+}
+
+enum TransmissionKind {
+  QUOTE_REQUEST
+  APPLICATION
+  DOCUMENT
+}
+
+enum PrivacyRequestStatus {
+  RECEIVED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  BLOCKED_BY_RETENTION
+}
+
+// -----------------------------------------------------------------------------
+//  Identitaet und Zugriff
+// -----------------------------------------------------------------------------
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Stabile Kennung beim Identity Provider ("sub"). Passwoerter werden hier
+  /// nie gespeichert (docs/architecture/security-model.md Abschnitt 1).
+  subject     String  @unique
+  email       String  @unique
+  displayName String
+  isActive    Boolean @default(true)
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  /// Zeitpunkt der Deaktivierung. Benutzer werden nicht geloescht, solange
+  /// Audit-Eintraege auf sie verweisen.
+  disabledAt DateTime? @db.Timestamptz(6)
+
+  roles              UserRole[]
+  assignedLeads      Lead[]              @relation("LeadOwner")
+  assignedCases      InsuranceCase[]     @relation("CaseOwner")
+  tasks              Task[]              @relation("TaskAssignee")
+  validationDecisions ValidationResult[] @relation("ValidationDecider")
+  /// Kundenkonto: Verknuepfung zur Person, sofern der Benutzer ein Kunde ist.
+  customer           Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId         String?             @unique @db.Uuid
+
+  @@index([isActive])
+  @@map("user")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        RoleName @unique
+  description String
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("role")
+}
+
+model Permission {
+  id   String @id @default(uuid()) @db.Uuid
+  /// Fachlicher Code, z. B. "quote:approve".
+  code String @unique
+  description String
+
+  roles RolePermission[]
+
+  @@map("permission")
+}
+
+model UserRole {
+  userId     String   @db.Uuid
+  roleId     String   @db.Uuid
+  grantedAt  DateTime @default(now()) @db.Timestamptz(6)
+  grantedBy  String?  @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_role")
+}
+
+model RolePermission {
+  roleId       String @db.Uuid
+  permissionId String @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permission")
+}
+
+// -----------------------------------------------------------------------------
+//  Personen
+// -----------------------------------------------------------------------------
+
+model Customer {
+  id String @id @default(uuid()) @db.Uuid
+
+  firstName String
+  lastName  String
+  /// Reines Kalenderdatum ohne Zeitzone.
+  birthDate DateTime @db.Date
+
+  preferredLanguage String @default("de")
+
+  /// Vergleichsschluessel fuer die Erkennung vorhandener Personen.
+  /// Kein Unique: gleiche Merkmale sind ein Hinweis, kein Beweis. Datensaetze
+  /// werden nie automatisch zusammengefuehrt (docs/product/non-goals.md).
+  matchKey String
+
+  isVerified Boolean @default(false)
+  isBlocked  Boolean @default(false)
+
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @db.Timestamptz(6)
+  /// Zeitpunkt der Anonymisierung. Der Datensatz bleibt bestehen, die
+  /// personenbezogenen Felder werden ueberschrieben.
+  anonymizedAt DateTime? @db.Timestamptz(6)
+
+  addresses       CustomerAddress[]
+  contactMethods  ContactMethod[]
+  consents        Consent[]
+  leads           Lead[]
+  cases           InsuranceCase[]
+  communications  Communication[]
+  deletionRequests   DeletionRequest[]
+  dataExportRequests DataExportRequest[]
+  userAccount     User?
+
+  @@index([matchKey])
+  @@index([lastName])
+  @@index([anonymizedAt])
+  @@map("customer")
+}
+
+model CustomerAddress {
+  id         String  @id @default(uuid()) @db.Uuid
+  customerId String  @db.Uuid
+
+  street       String
+  houseNumber  String
+  addressLine2 String?
+  postalCode   String
+  city         String
+  country      Country
+
+  isPrimary Boolean  @default(true)
+  validFrom DateTime @default(now()) @db.Timestamptz(6)
+  validTo   DateTime? @db.Timestamptz(6)
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([postalCode, country])
+  @@map("customer_address")
+}
+
+model ContactMethod {
+  id         String      @id @default(uuid()) @db.Uuid
+  customerId String      @db.Uuid
+  kind       ContactKind
+  /// Normalisiert: E-Mail in Kleinschreibung, Telefon in E.164.
+  value      String
+  isPrimary  Boolean     @default(false)
+  isVerified Boolean     @default(false)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  /// Dieselbe Adresse darf einer Person nicht doppelt zugeordnet sein.
+  @@unique([customerId, kind, value])
+  @@index([value])
+  @@map("contact_method")
+}
+
+model PrivacyNoticeVersion {
+  id      String @id @default(uuid()) @db.Uuid
+  /// Fachliche Version, z. B. "2026-01".
+  version String @unique
+  /// Inhalt als Markdown. Der Text ist Nachweismittel und wird nie geaendert;
+  /// Aenderungen erzeugen eine neue Version.
+  content String
+  country Country?
+
+  publishedAt DateTime  @db.Timestamptz(6)
+  retiredAt   DateTime? @db.Timestamptz(6)
+
+  consents Consent[]
+
+  @@index([publishedAt])
+  @@map("privacy_notice_version")
+}
+
+model Consent {
+  id         String         @id @default(uuid()) @db.Uuid
+  customerId String         @db.Uuid
+  purpose    ConsentPurpose
+  legalBasis LegalBasis
+
+  granted   Boolean
+  grantedAt DateTime  @default(now()) @db.Timestamptz(6)
+  /// Zeitpunkt des Widerrufs. Ein Widerruf loescht die Einwilligung nicht,
+  /// sondern beendet sie: der Nachweis muss erhalten bleiben.
+  revokedAt DateTime? @db.Timestamptz(6)
+
+  /// Herkunftsnachweis. Bewusst ohne IP-Adresse: fuer den Nachweis genuegt
+  /// die Quelle, die genaue Netzadresse waere ueberschuessiger Personenbezug.
+  sourceChannel String
+
+  privacyNoticeVersionId String @db.Uuid
+  privacyNoticeVersion   PrivacyNoticeVersion @relation(fields: [privacyNoticeVersionId], references: [id])
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId, purpose])
+  @@index([revokedAt])
+  @@map("consent")
+}
+
+// -----------------------------------------------------------------------------
+//  Produkte
+// -----------------------------------------------------------------------------
+
+model ProductDefinition {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Produktcode. Im MVP synthetisch (Praefix DEMO-), siehe
+  /// docs/callidus/decision-log.md CD-004.
+  code        String  @unique
+  name        String
+  description String
+  isActive    Boolean @default(false)
+
+  /// Ob dieses Produkt auf der oeffentlichen Website angeboten wird.
+  isPubliclyOffered Boolean @default(false)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  schemas ProductSchema[]
+  cases   InsuranceCase[]
+
+  @@map("product_definition")
+}
+
+model ProductSchema {
+  id        String  @id @default(uuid()) @db.Uuid
+  productId String  @db.Uuid
+  country   Country
+  version   Int
+
+  effectiveFrom DateTime  @db.Timestamptz(6)
+  effectiveTo   DateTime? @db.Timestamptz(6)
+  status        ProductSchemaStatus @default(DRAFT)
+
+  /// JSON-Schema der Eingabefelder, beschraenkt auf die in
+  /// packages/validation zugelassene Teilmenge (ADR-0003).
+  inputSchema Json
+  /// Darstellungshinweise. Ohne Einfluss auf die Pruefung.
+  uiSchema    Json
+
+  publishedAt DateTime? @db.Timestamptz(6)
+  publishedBy String?   @db.Uuid
+  retiredAt   DateTime? @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  product        ProductDefinition     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  fieldMappings  ProductFieldMapping[]
+  cases          InsuranceCase[]
+  requestVersions QuoteRequestVersion[]
+
+  @@unique([productId, country, version])
+  @@index([status, country])
+  @@map("product_schema")
+}
+
+model ProductFieldMapping {
+  id              String @id @default(uuid()) @db.Uuid
+  productSchemaId String @db.Uuid
+
+  /// JSON-Pointer in die eigenen Produktdaten.
+  sourcePath  String
+  /// Feldname der Gegenseite. Bleibt leer, solange F-04 offen ist
+  /// (docs/callidus/data-mapping.md).
+  targetField String?
+  /// Deklarative Umformung. Freie Ausdruecke sind nicht zulaessig.
+  transform   String  @default("none")
+  /// Werteliste fuer transform = "codeList".
+  codeList    Json?
+  required    Boolean @default(false)
+
+  productSchema ProductSchema @relation(fields: [productSchemaId], references: [id], onDelete: Cascade)
+
+  @@unique([productSchemaId, sourcePath])
+  @@map("product_field_mapping")
+}
+
+// -----------------------------------------------------------------------------
+//  Leads und Vorgaenge
+// -----------------------------------------------------------------------------
+
+model Lead {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Ein Lead kann vor der eindeutigen Identifikation einer Person entstehen.
+  customerId String? @db.Uuid
+
+  source          LeadSource
+  productInterest String?
+  country         Country
+  status          LeadStatus @default(NEW)
+  priority        Priority   @default(NORMAL)
+
+  ownerId String? @db.Uuid
+
+  nextAction   String?
+  nextActionDue DateTime? @db.Timestamptz(6)
+  lostReason   LeadLostReason?
+  note         String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  owner    User?     @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  cases    InsuranceCase[]
+
+  @@index([status, ownerId])
+  @@index([customerId])
+  @@index([nextActionDue])
+  @@map("lead")
+}
+
+model InsuranceCase {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Fachliche, extern kommunizierbare Vorgangsnummer.
+  caseNumber String @unique
+
+  customerId      String  @db.Uuid
+  leadId          String? @db.Uuid
+  productId       String  @db.Uuid
+  /// Die Schemaversion, gegen die dieser Vorgang geprueft wird. Sie bleibt
+  /// fest, auch wenn spaeter neuere Versionen veroeffentlicht werden.
+  productSchemaId String  @db.Uuid
+  country         Country
+
+  status   CaseStatus @default(DRAFT)
+  priority Priority   @default(NORMAL)
+  ownerId  String?    @db.Uuid
+
+  /// Optimistische Sperre: verhindert, dass zwei gleichzeitige Bearbeitungen
+  /// einander ueberschreiben.
+  version Int @default(0)
+
+  cancellationReason String?
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+  completedAt DateTime? @db.Timestamptz(6)
+
+  customer      Customer          @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  lead          Lead?             @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  product       ProductDefinition @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productSchema ProductSchema     @relation(fields: [productSchemaId], references: [id], onDelete: Restrict)
+  owner         User?             @relation("CaseOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  workflow       WorkflowInstance?
+  quoteRequests  QuoteRequest[]
+  quotes         Quote[]
+  documents      Document[]
+  tasks          Task[]
+  communications Communication[]
+  transmissions  CallidusTransmission[]
+
+  @@index([status, ownerId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("insurance_case")
+}
+
+model WorkflowInstance {
+  id     String @id @default(uuid()) @db.Uuid
+  caseId String @unique @db.Uuid
+
+  currentStatus CaseStatus
+  enteredAt     DateTime   @default(now()) @db.Timestamptz(6)
+
+  case   InsuranceCase   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  events WorkflowEvent[]
+
+  @@map("workflow_instance")
+}
+
+model WorkflowEvent {
+  id         String @id @default(uuid()) @db.Uuid
+  workflowId String @db.Uuid
+
+  /// Code des benannten Uebergangs (ADR-0007).
+  transitionCode String
+  fromStatus     CaseStatus
+  toStatus       CaseStatus
+
+  /// Wer ausgeloest hat. Null bedeutet: durch das System.
+  actorUserId String? @db.Uuid
+  actorRole   String
+
+  /// Warum. Bei Abbruch und Ablehnung verpflichtend.
+  reason String?
+
+  occurredAt DateTime @default(now()) @db.Timestamptz(6)
+
+  workflow WorkflowInstance @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId, occurredAt])
+  @@map("workflow_event")
+}
+
+// -----------------------------------------------------------------------------
+//  Angebotsanfrage und Angebot
+// -----------------------------------------------------------------------------
+
+model QuoteRequest {
+  id     String @id @default(uuid()) @db.Uuid
+  caseId String @db.Uuid
+
+  status QuoteRequestStatus @default(DRAFT)
+
+  /// Verhindert eine doppelte Einreichung bei der Gegenseite.
+  idempotencyKey String? @unique
+
+  submittedAt DateTime? @db.Timestamptz(6)
+  answeredAt  DateTime? @db.Timestamptz(6)
+
+  /// Fehlercode der letzten fehlgeschlagenen Uebermittlung.
+  lastErrorCode    String?
+  lastErrorMessage String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  case     InsuranceCase         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  versions QuoteRequestVersion[]
+  quotes   Quote[]
+
+  @@index([caseId, status])
+  @@map("quote_request")
+}
+
+model QuoteRequestVersion {
+  id             String @id @default(uuid()) @db.Uuid
+  quoteRequestId String @db.Uuid
+  version        Int
+
+  /// Produktspezifische Risikodaten. Gebunden an productSchemaId (ADR-0003).
+  data            Json
+  productSchemaId String @db.Uuid
+
+  /// Relational gespiegelte Suchfelder aus `data`
+  /// (ADR-0003, Bedingung 5). Erlaubt Auswertung ohne Jsonb-Zugriff.
+  searchFields Json?
+
+  /// Nach dem Einfrieren ist die Version unveraenderlich.
+  frozenAt  DateTime? @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  createdBy String?   @db.Uuid
+
+  quoteRequest  QuoteRequest  @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  productSchema ProductSchema @relation(fields: [productSchemaId], references: [id], onDelete: Restrict)
+
+  @@unique([quoteRequestId, version])
+  @@map("quote_request_version")
+}
+
+model Quote {
+  id             String @id @default(uuid()) @db.Uuid
+  caseId         String @db.Uuid
+  quoteRequestId String @db.Uuid
+
+  origin            QuoteOrigin
+  externalReference String?
+
+  productCode String
+  tariffName  String
+
+  /// Geldbetrag als Decimal mit Waehrung (ADR-0004).
+  premiumAmount   Decimal          @db.Decimal(14, 2)
+  currency        String           @default("EUR") @db.Char(3)
+  paymentFrequency PaymentFrequency
+  termMonths      Int
+
+  coverageStart DateTime @db.Date
+  validUntil    DateTime @db.Date
+
+  approvalStatus QuoteApprovalStatus @default(PENDING)
+  approvedAt     DateTime?           @db.Timestamptz(6)
+  approvedBy     String?             @db.Uuid
+
+  sentToCustomerAt DateTime? @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  case         InsuranceCase   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  quoteRequest QuoteRequest    @relation(fields: [quoteRequestId], references: [id], onDelete: Restrict)
+  coverages    QuoteCoverage[]
+  exclusions   QuoteExclusion[]
+  validationRuns ValidationRun[]
+  documents    Document[]
+
+  /// Eine externe Referenz darf nur einmal importiert werden: schuetzt gegen
+  /// doppelte Antworten der Gegenseite.
+  @@unique([quoteRequestId, externalReference])
+  @@index([caseId, approvalStatus])
+  @@index([validUntil])
+  @@map("quote")
+}
+
+model QuoteCoverage {
+  id      String @id @default(uuid()) @db.Uuid
+  quoteId String @db.Uuid
+
+  code  String
+  label String
+
+  sumInsuredAmount Decimal? @db.Decimal(14, 2)
+  deductibleAmount Decimal? @db.Decimal(14, 2)
+  currency         String   @default("EUR") @db.Char(3)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteId, code])
+  @@map("quote_coverage")
+}
+
+model QuoteExclusion {
+  id      String @id @default(uuid()) @db.Uuid
+  quoteId String @db.Uuid
+
+  code  String
+  label String
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteId, code])
+  @@map("quote_exclusion")
+}
+
+// -----------------------------------------------------------------------------
+//  Pruefung
+// -----------------------------------------------------------------------------
+
+model ValidationRun {
+  id      String @id @default(uuid()) @db.Uuid
+  quoteId String @db.Uuid
+
+  /// Gesamtergebnis: das schlechteste Einzelergebnis gewinnt.
+  outcome ValidationOutcome
+
+  startedAt  DateTime  @default(now()) @db.Timestamptz(6)
+  finishedAt DateTime? @db.Timestamptz(6)
+
+  quote   Quote              @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  results ValidationResult[]
+
+  @@index([quoteId, startedAt])
+  @@map("validation_run")
+}
+
+model ValidationResult {
+  id    String @id @default(uuid()) @db.Uuid
+  runId String @db.Uuid
+
+  ruleCode    String
+  ruleVersion Int
+  severity    ValidationSeverity
+
+  /// Welcher Datensatz geprueft wurde, als JSON-Pointer oder Entitaetsangabe.
+  checkedField  String
+  expectedValue String?
+  actualValue   String?
+
+  outcome ValidationOutcome
+  /// Deutschsprachige Begruendung. Eine Pruefung ohne Begruendung ist keine
+  /// erklaerbare Entscheidung (Auftrag Abschnitt 6.7).
+  reason  String
+  /// Woher der Erwartungswert stammt, z. B. "case.customer.lastName".
+  source  String
+  /// Technische Sicherheit 0..1. Deterministische Regeln liefern 1.
+  confidence Decimal @default(1) @db.Decimal(4, 3)
+
+  /// Menschliche Entscheidung. Pflicht, sobald outcome nicht PASS ist und der
+  /// Vorgang weitergefuehrt werden soll.
+  humanDecision   HumanDecision?
+  decidedByUserId String?        @db.Uuid
+  decidedAt       DateTime?      @db.Timestamptz(6)
+  comment         String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  run       ValidationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  decidedBy User?         @relation("ValidationDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([runId, outcome])
+  @@index([ruleCode])
+  @@map("validation_result")
+}
+
+// -----------------------------------------------------------------------------
+//  Dokumente
+// -----------------------------------------------------------------------------
+
+model Document {
+  id     String  @id @default(uuid()) @db.Uuid
+  caseId String  @db.Uuid
+  quoteId String? @db.Uuid
+
+  type        DocumentType
+  origin      DocumentOrigin
+  accessClass AccessClass  @default(INTERNAL)
+  title       String
+
+  /// Aufbewahrungsklasse, aufgeloest ueber RetentionPolicy.
+  retentionClass String    @default("STANDARD")
+  deleteAfter    DateTime? @db.Timestamptz(6)
+  deletedAt      DateTime? @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  case     InsuranceCase     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  quote    Quote?            @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  versions DocumentVersion[]
+
+  @@index([caseId, type])
+  @@index([deleteAfter])
+  @@map("document")
+}
+
+model DocumentVersion {
+  id         String @id @default(uuid()) @db.Uuid
+  documentId String @db.Uuid
+  version    Int
+
+  /// Referenz im Object Storage. Der Inhalt liegt nie in der Datenbank.
+  storageKey String @unique
+  mimeType   String
+  sizeBytes  BigInt
+  /// SHA-256 als Hexadezimalzeichenkette.
+  checksum   String
+
+  scanStatus   ScanStatus @default(PENDING)
+  scannedAt    DateTime?  @db.Timestamptz(6)
+  scanResult   String?
+
+  uploadedAt     DateTime @default(now()) @db.Timestamptz(6)
+  uploadedByUserId String? @db.Uuid
+
+  document           Document           @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  signatureEnvelopes SignatureEnvelope[]
+
+  @@unique([documentId, version])
+  @@index([checksum])
+  @@index([scanStatus])
+  @@map("document_version")
+}
+
+// -----------------------------------------------------------------------------
+//  Signatur
+// -----------------------------------------------------------------------------
+
+model SignatureEnvelope {
+  id                String @id @default(uuid()) @db.Uuid
+  /// Die Signatur bindet an genau eine Dokumentversion. Damit ist ausgeschlossen,
+  /// dass eine spaetere Fassung als signiert gilt (Risiko R-07).
+  documentVersionId String @db.Uuid
+
+  provider   String
+  /// Kennung beim Anbieter. Null, solange der Vorgang nur lokal besteht.
+  externalId String?
+
+  recipientEmail String
+  recipientName  String
+
+  status         SignatureStatus         @default(CREATED)
+  assuranceLevel SignatureAssuranceLevel @default(UNDETERMINED)
+
+  sentAt     DateTime? @db.Timestamptz(6)
+  openedAt   DateTime? @db.Timestamptz(6)
+  signedAt   DateTime? @db.Timestamptz(6)
+  declinedAt DateTime? @db.Timestamptz(6)
+  expiresAt  DateTime? @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  documentVersion DocumentVersion  @relation(fields: [documentVersionId], references: [id], onDelete: Restrict)
+  events          SignatureEvent[]
+
+  @@unique([provider, externalId])
+  @@index([status])
+  @@map("signature_envelope")
+}
+
+model SignatureEvent {
+  id         String @id @default(uuid()) @db.Uuid
+  envelopeId String @db.Uuid
+
+  /// Kennung des Ereignisses beim Anbieter. Zusammen mit dem Anbieter
+  /// eindeutig: verhindert die doppelte Anwendung eines Webhooks.
+  externalEventId String
+  provider        String
+  eventType       String
+
+  /// Zeitpunkt beim Anbieter. Aeltere Ereignisse duerfen einen neueren
+  /// Zustand nicht ueberschreiben.
+  occurredAt DateTime @db.Timestamptz(6)
+  receivedAt DateTime @default(now()) @db.Timestamptz(6)
+
+  /// Ob dieses Ereignis den Zustand geaendert hat. Doppelte Ereignisse werden
+  /// protokolliert, aber nicht angewendet.
+  applied Boolean @default(false)
+
+  /// Rohdaten des Anbieters, ohne Dokumentinhalte.
+  payload Json
+
+  envelope SignatureEnvelope @relation(fields: [envelopeId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalEventId])
+  @@index([envelopeId, occurredAt])
+  @@map("signature_event")
+}
+
+// -----------------------------------------------------------------------------
+//  Aufgaben und Kommunikation
+// -----------------------------------------------------------------------------
+
+model Task {
+  id     String  @id @default(uuid()) @db.Uuid
+  caseId String? @db.Uuid
+
+  title       String
+  description String?
+  assigneeId  String? @db.Uuid
+
+  dueAt          DateTime?  @db.Timestamptz(6)
+  priority       Priority   @default(NORMAL)
+  status         TaskStatus @default(OPEN)
+  escalationLevel Int       @default(0)
+
+  /// Fachlicher Schluessel zur Vermeidung doppelter Aufgaben, z. B.
+  /// "case:<id>:manual_review:<runId>".
+  dedupeKey String? @unique
+
+  completedAt DateTime? @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(6)
+
+  case     InsuranceCase? @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  assignee User?          @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([assigneeId, status, dueAt])
+  @@index([caseId, status])
+  @@map("task")
+}
+
+model Communication {
+  id         String  @id @default(uuid()) @db.Uuid
+  caseId     String? @db.Uuid
+  customerId String? @db.Uuid
+
+  channel  CommunicationChannel
+  template String
+  subject  String?
+
+  status CommunicationStatus @default(QUEUED)
+
+  /// Auf welche Rechtsgrundlage der Versand gestuetzt wird.
+  legalBasis LegalBasis
+  /// Grund, falls der Versand unterblieben ist.
+  suppressionReason String?
+
+  /// Erinnerungsschritt, sofern es sich um eine Erinnerung handelt.
+  reminderKind ReminderKind?
+  /// Verhindert doppelte Erinnerungen fuer denselben Schritt.
+  dedupeKey    String?       @unique
+
+  queuedAt    DateTime  @default(now()) @db.Timestamptz(6)
+  sentAt      DateTime? @db.Timestamptz(6)
+  deliveredAt DateTime? @db.Timestamptz(6)
+  failedAt    DateTime? @db.Timestamptz(6)
+  errorCode   String?
+
+  case     InsuranceCase? @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  customer Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([caseId, channel])
+  @@index([status, queuedAt])
+  @@map("communication")
+}
+
+// -----------------------------------------------------------------------------
+//  Callidus-Uebertragungen
+// -----------------------------------------------------------------------------
+
+model CallidusTransmission {
+  id     String @id @default(uuid()) @db.Uuid
+  caseId String @db.Uuid
+
+  kind      TransmissionKind
+  direction TransmissionDirection
+  channel   TransmissionChannel
+  status    TransmissionStatus    @default(PREPARED)
+
+  /// Schuetzt gegen doppelte Einreichung (Risiko R-06).
+  idempotencyKey String @unique
+  /// Referenz der Gegenseite, sofern sie eine vergibt.
+  externalReference String?
+
+  /// Speicherreferenz des Exportpakets, sofern erzeugt.
+  packageStorageKey String?
+  packageChecksum   String?
+
+  preparedAt  DateTime  @default(now()) @db.Timestamptz(6)
+  confirmedAt DateTime? @db.Timestamptz(6)
+  confirmedByUserId String? @db.Uuid
+  failedAt    DateTime? @db.Timestamptz(6)
+  errorCode   String?
+  errorMessage String?
+
+  case   InsuranceCase   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  events CallidusEvent[]
+
+  @@index([caseId, kind])
+  @@index([status])
+  @@map("callidus_transmission")
+}
+
+model CallidusEvent {
+  id             String @id @default(uuid()) @db.Uuid
+  transmissionId String @db.Uuid
+
+  eventType String
+  /// Kennung der Gegenseite, sofern vorhanden. Zusammen mit der Uebertragung
+  /// eindeutig: verhindert doppelte Verarbeitung.
+  externalEventId String?
+
+  occurredAt DateTime @db.Timestamptz(6)
+  receivedAt DateTime @default(now()) @db.Timestamptz(6)
+  applied    Boolean  @default(false)
+
+  /// Nutzdaten ohne Dokumentinhalte und ohne Zugangsdaten.
+  payload Json
+
+  transmission CallidusTransmission @relation(fields: [transmissionId], references: [id], onDelete: Cascade)
+
+  @@unique([transmissionId, externalEventId])
+  @@index([transmissionId, occurredAt])
+  @@map("callidus_event")
+}
+
+// -----------------------------------------------------------------------------
+//  Audit
+// -----------------------------------------------------------------------------
+
+/// Revisionssicheres Protokoll.
+///
+/// Bewusst ohne Fremdschluessel: das Protokoll muss erhalten bleiben, auch
+/// wenn ein referenzierter Datensatz anonymisiert wird (ADR-0006).
+/// Schreibrechte sind auf INSERT beschraenkt; eine Migration entzieht der
+/// Anwendungsrolle UPDATE und DELETE und blockiert beides zusaetzlich per
+/// Trigger.
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Ereignisname, z. B. "case.quote_approved_by_human".
+  eventName String
+
+  entityType String
+  entityId   String @db.Uuid
+
+  /// Handelnde Person. Null bedeutet: durch das System.
+  actorUserId String? @db.Uuid
+  actorRole   String
+
+  /// Verknuepft den Eintrag mit dem technischen Protokoll.
+  correlationId String
+
+  /// Ergebnis der Aktion: erlaubt es, auch abgewiesene Zugriffe zu erkennen.
+  outcome String @default("SUCCESS")
+
+  /// Zusatzangaben ohne Nutzdaten: keine Passwoerter, keine Tokens, keine
+  /// Bankdaten, keine Dokumentinhalte.
+  metadata Json?
+
+  occurredAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([entityType, entityId, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@index([eventName, occurredAt])
+  @@index([occurredAt])
+  @@map("audit_event")
+}
+
+// -----------------------------------------------------------------------------
+//  Datenschutz
+// -----------------------------------------------------------------------------
+
+model RetentionPolicy {
+  id String @id @default(uuid()) @db.Uuid
+
+  /// Klasse, auf die Dokumente und Vorgaenge verweisen.
+  retentionClass String @unique
+  description    String
+
+  /// Aufbewahrungsdauer in Monaten ab dem ausloesenden Ereignis.
+  retentionMonths Int
+  /// Rechtsgrundlage der Aufbewahrung, z. B. handels- oder steuerrechtlich.
+  legalReference String
+
+  /// Ob eine Loeschung vor Fristablauf ausgeschlossen ist. In diesem Fall
+  /// gewinnt die Aufbewahrungspflicht gegen einen Loeschantrag.
+  blocksErasure Boolean @default(true)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@map("retention_policy")
+}
+
+model DeletionRequest {
+  id         String @id @default(uuid()) @db.Uuid
+  customerId String @db.Uuid
+
+  requestedAt DateTime             @default(now()) @db.Timestamptz(6)
+  status      PrivacyRequestStatus @default(RECEIVED)
+
+  /// Begruendung, falls die Loeschung ganz oder teilweise unterbleibt.
+  decisionReason String?
+  /// Frist, nach deren Ablauf die Loeschung nachgeholt wird.
+  blockedUntil   DateTime? @db.Timestamptz(6)
+
+  completedAt      DateTime? @db.Timestamptz(6)
+  processedByUserId String?  @db.Uuid
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([status, requestedAt])
+  @@map("deletion_request")
+}
+
+model DataExportRequest {
+  id         String @id @default(uuid()) @db.Uuid
+  customerId String @db.Uuid
+
+  requestedAt DateTime             @default(now()) @db.Timestamptz(6)
+  status      PrivacyRequestStatus @default(RECEIVED)
+
+  /// Speicherreferenz des erzeugten Exports. Der Abruf erfolgt ueber einen
+  /// kurzlebigen signierten Link nach erneuter Autorisierung.
+  exportStorageKey String?
+  expiresAt        DateTime? @db.Timestamptz(6)
+
+  completedAt      DateTime? @db.Timestamptz(6)
+  processedByUserId String?  @db.Uuid
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([status, requestedAt])
+  @@map("data_export_request")
+}
