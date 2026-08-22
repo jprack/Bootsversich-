@@ -113,7 +113,8 @@ kürzen. Jede hier gesparte Woche kostet später Monate.
 | Modul | Umfang |
 |---|---|
 | **M0** | Kontakt, Kunde, Organisation, **Versicherer**, Boot, Vertrag — Erfassung und Pflege. **Zwei Mandanten (AT, DE)** ab Beginn, da die Zulassung für beide Märkte gilt |
-| **M2** | Öffentliche Website, Produktseiten, Rechner-Einstieg, Formular-Engine, Einwilligungen, Attribution |
+| **M2** | Öffentliche Website, Produktseiten, Formular-Engine, Einwilligungen, Attribution |
+| **Tarifwerk** | Import-Vorlage, Import mit Vier-Augen-Freigabe, serverseitige Berechnung, Anzeige der Spanne, Berechnungsprotokoll ([`13_TARIFWERK.md`](13_TARIFWERK.md)) |
 | **M1** | Lead, Aktivität, Aufgabe, Lead Score, Customer Value Score, Regelkatalog, Priorisierung — Übernahme aus `01_CRM_ENGINE` |
 | **M3** | Kampagne, Newsletter, Segmente, Brevo-Konnektor, Einwilligungsprüfung, Rücklaufsignale |
 
@@ -122,10 +123,14 @@ Nachweis, der Vertrieb sieht ihn priorisiert in seiner Tagesliste, der Kontakt
 erhält einen Newsletter, ein Klick verändert den Score. Beides in AT **und** DE,
 mit getrennten Rechtstexten.
 
-**Zu entscheiden in dieser Welle: A-08.** Zeigt die Website eine unverbindliche
-Richtprämie, oder ist sie eine reine Anfragestrecke? Ohne Online-Tarifierung
-(ADR-0010) bestimmt diese Frage den Zuschnitt von M2 und die zu erwartende
-Umwandlungsquote. Sie ist die wichtigste Produktentscheidung der Roadmap.
+**A-08 ist entschieden** (ADR-0012): Die Website zeigt eine unverbindliche
+**Spanne**, errechnet aus dem eigenen Tarifwerk über alle in Frage kommenden
+Träger. Die Datengrundlage liegt als Excel und PDF vor.
+
+**Der Aufwand liegt nicht in der Programmierung**, sondern in der einmaligen
+Zuordnung je Träger auf die Import-Vorlage. Diese Arbeit kann sofort beginnen,
+ohne auf Entwicklung zu warten — sie ist der am besten parallelisierbare Teil
+der gesamten Welle.
 
 **Damit ist der Fluss `Lead → CRM → Newsletter → Kunde` vollständig.**
 
@@ -253,7 +258,7 @@ Deshalb beginnen sie früher, als es nötig erscheint.
 | Offener Punkt | Klärung beginnt | Muss vorliegen vor | Folge bei Verzug |
 |---|---|---|---|
 | ~~A-01, A-02, A-03~~ | — | — | **geschlossen** (E-Mail · Mehrfachagent AT+DE · Hetzner) |
-| **A-08** Richtprämie auf der Website und Herkunft der Tarifdaten | sofort | Baubeginn M2 | M2 muss umgeschnitten werden |
+| **A-11** Vertragliche Zulässigkeit der Prämienanzeige je Träger | sofort | Baubeginn M2 | Träger fällt aus der Spanne; bei allen Trägern: zurück auf reine Anfragestrecke |
 | **A-09** Versandweg für Vorgangsmails | Welle 0 | Welle 2 | Angebotsanfragen kommen nicht an — ohne Fehlermeldung |
 | **A-07** Auftragsverarbeitung (Brevo, Microsoft, KI) | Welle 0 | MS-3 beziehungsweise MS-10 | Kein Versand, keine KI |
 | **A-10** Beratungs- und Dokumentationspflichten für Mehrfachagenten | Welle 1 | MS-4 produktiv | Auswahlbegründung ggf. unzureichend |
@@ -274,7 +279,8 @@ Programmierung.
 |---|---|---|---|
 | **U-01** | **Antwortzeit der Versicherer wird zum Nadelöhr** | Interessenten springen zwischen Anfrage und Angebot ab — die teuerste Stelle des Trichters | Fristüberwachung je Träger, Antwortzeit als Leitkennzahl in M11, Eskalation bei Überschreitung |
 | **U-11** | **Angebotsanfragen landen im Spam** | Keine Antwort, keine Fehlermeldung, kein Alarm | SPF, DKIM, DMARC als Abnahmekriterium; getrennte Absenderdomäne für Vorgangsmails; Überwachung der Zustellrate |
-| **U-12** | **Richtprämie und tatsächliches Angebot weichen ab** | Vertrauensverlust an der teuersten Stelle | Spanne statt Betrag, unübersehbare Kennzeichnung, gepflegte Tarifdaten mit benanntem Verantwortlichen — oder Weg A wählen |
+| **U-12** | **Richtprämie und tatsächliches Angebot weichen ab** | Vertrauensverlust an der teuersten Stelle | Spanne statt Betrag; Abweichungsmessung ab Welle 2 mit Zielwert 80 % Treffer; unübersehbare Kennzeichnung |
+| **U-13** | **Das Tarifwerk verfällt still** | Die Website zeigt Zahlen von vorgestern, und niemand merkt es | Benannte verantwortliche Person; das System erzeugt selbst eine Aufgabe, wenn ein Werk älter als zwölf Monate ist |
 | **U-02** | WordPress-Anteil wächst schleichend, Fachdaten wandern in `wp_postmeta` | Die zentrale Trennung fällt, Sicherheit und Nachweisbarkeit sind verloren | Prinzip P1 ist ADR und wird in der Codeprüfung durchgesetzt; kein Fachdatum in WordPress-Tabellen |
 | **U-03** | Compliance beginnt erst am Ende | Produktivgang verschiebt sich um Monate | Strang E läuft ab Tag eins |
 | **U-04** | Frühzeitiger Bau von M8 und M11 | Aufwand ohne Datengrundlage | Wellenreihenfolge ist verbindlich |
@@ -291,7 +297,8 @@ Programmierung.
 
 | Sofort beginnen | Warum |
 |---|---|
-| **A-08 entscheiden**: Richtprämie oder reine Anfragestrecke | Bestimmt den Zuschnitt von M2 und die zu erwartende Umwandlung |
+| **A-11 klären**: Darf die Prämie je Träger öffentlich angezeigt werden? | Fällt die Antwort bei allen negativ aus, entfällt die Richtprämie vollständig |
+| **Tarife je Träger auf die Import-Vorlage zuordnen** | Braucht keinen Entwickler, kann sofort laufen, ist Voraussetzung für M2 |
 | Hetzner nach der Reihenfolge in Kapitel 12 einrichten | Schritt 5 und 6 — Wiederherstellungsprobe und dritte Sicherungskopie — **vor** der ersten echten Person |
 | Absenderdomänen, SPF, DKIM, DMARC einrichten (**A-09**) | Ohne diese kommen Angebotsanfragen nicht an, und es fällt niemandem auf |
 | Pflichtfelder je Träger aus deren Antragsformularen erheben | Grundlage der Produktschemata; braucht keinen Entwickler und kann sofort laufen |

@@ -113,7 +113,7 @@ graph TB
 | **Ausgaben** | Lead an M1 mit vollständiger Herkunft · Einwilligungsnachweis an M0 · Bestätigungs-E-Mail über M3 · Ereignis `lead.eingegangen` |
 | **Abgrenzung** | Bewertet Leads nicht — das tut M1. Versendet nicht selbst — das tut M3. |
 | **Fachliche Regel** | Ein Formular ohne erfasste Rechtsgrundlage erzeugt keinen Lead, sondern einen Fehler. Es gibt keinen stillschweigenden Weg in die Datenbank. |
-| **Offen** | **Ohne Online-Tarifierung** (ADR-0010) kann die Website keine verbindliche Prämie zeigen. Ob stattdessen eine unverbindliche Richtprämie erscheint, ist offener Punkt **A-08** — er bestimmt den Zuschnitt dieses Moduls. |
+| **Richtprämie** | Ohne Online-Tarifierung (ADR-0010) zeigt die Website **keine verbindliche Prämie**, sondern eine unverbindliche **Spanne** — serverseitig aus dem eigenen Tarifwerk über alle in Frage kommenden Träger errechnet (ADR-0012, [`13_TARIFWERK.md`](13_TARIFWERK.md)). Weniger als zwei Träger mit Ergebnis: keine Anzeige. |
 | **Doppelte Erkennung** | Bekannte Personen werden anhand definierter Merkmale erkannt und **vorgeschlagen**, nie automatisch zusammengeführt. |
 
 ---
@@ -253,6 +253,7 @@ graph TB
 | Boot | M0 | M1, M4, M7, M8, M11 |
 | Vertrag, Deckung, Prämie | M0 | M1, M7, M10, M11 |
 | Versicherer, Kanal je Träger | M0 | M10, M11 |
+| Tarifwerk, Tarifposition, Tariffaktor | M0 | M2 (Richtprämie), M10 (Plausibilitätsprüfung), M11 |
 | Einwilligung, Widerspruch | M0 / M3 | M2, M3, M7, M11 |
 | Lead, Aktivität, Score, Aufgabe | M1 | M2, M4, M5, M6, M8, M11 |
 | Marketingkampagne, Newsletter | M3 | M2, M11 |

@@ -7,9 +7,9 @@
 | Phase | `01_ARCHITECTURE` |
 | Zweck | Vollständige Zielarchitektur der europäischen Boat-Insurance- und Boat-Marketing-Plattform |
 | Status | Architekturentwurf zur Freigabe |
-| Fassung | 1.1 |
+| Fassung | 1.2 |
 | Datum | 2026-08-21 |
-| Geschlossen seit Fassung 1.0 | A-01 (E-Mail-Kanal) · A-02 (Mehrfachagent, AT+DE) · A-03 (Hetzner) |
+| Geschlossen seit Fassung 1.0 | A-01 (E-Mail-Kanal) · A-02 (Mehrfachagent, AT+DE) · A-03 (Hetzner) · A-08 (Richtprämie als Spanne) |
 | Plattformbasis | WordPress (Experience- und Portalschicht) + eigener Domänenkern |
 | Geltungsbereich | Österreich und Deutschland ab Welle 1, perspektivisch EU/EWR |
 | Sprache Fachmodell | Deutsch |
@@ -37,11 +37,12 @@
 | [`10_ROADMAP.md`](10_ROADMAP.md) | Reihenfolge, Abhängigkeiten, parallelisierbare Stränge, Meilensteine | Geschäftsführung, Projektsteuerung |
 | [`11_ANBINDUNG_PRODUKTQUELLE.md`](11_ANBINDUNG_PRODUKTQUELLE.md) | E-Mail als Kanal zu den Versicherern, Fächerung an mehrere Träger, Vergleich und Auswahl | Produkt, Integration |
 | [`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md) | Serveraufbau, Netz, Datenbank im Eigenbetrieb, Sicherungen, E-Mail-Zustellbarkeit, Einrichtungsreihenfolge | Betrieb |
+| [`13_TARIFWERK.md`](13_TARIFWERK.md) | Aus Excel und PDF wird eine versionierte, rechenbare Grundlage für die Richtprämie auf der Website | Produkt, Innendienst |
 | [`adr/`](adr/) | Architekturentscheidungen mit Kontext, Alternativen und Konsequenzen | Architektur |
 
-**Empfohlene Lesereihenfolge:** 01 → 03 → 04 → 07 → **11** → 02 → **12** → 05 → 06 → 08 → 09 → 10.
+**Empfohlene Lesereihenfolge:** 01 → 03 → 04 → 07 → **11** → **13** → 02 → **12** → 05 → 06 → 08 → 09 → 10.
 
-Für die Geschäftsführung genügen 01, 03, **11**, 09 und 10.
+Für die Geschäftsführung genügen 01, 03, **11**, **13**, 09 und 10.
 Wer das Hosting einrichtet, beginnt bei 12.
 
 ---
@@ -91,7 +92,9 @@ Ein Architekturentwurf, der keine offenen Punkte nennt, verbirgt sie nur.
 | ~~A-01~~ | ~~Produktquelle und Risikoträger~~ | — | **Geschlossen:** E-Mail-Kanal, mehrere Versicherer. Siehe [`11_ANBINDUNG_PRODUKTQUELLE.md`](11_ANBINDUNG_PRODUKTQUELLE.md) und ADR-0010 |
 | ~~A-02~~ | ~~Vermittlerstatus und Zulassung je Land~~ | — | **Geschlossen:** Mehrfachagent, zugelassen in AT und DE |
 | ~~A-03~~ | ~~Hostingpartner und Region~~ | — | **Geschlossen:** Hetzner, deutsche Standorte. Siehe [`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md) und ADR-0011 |
-| **A-08** | **Zeigt die Website eine unverbindliche Richtprämie — und woher kämen die Tarifdaten?** Ohne Online-Tarifierung ist das die entscheidende Produktfrage | Zuschnitt von M2, Umwandlungsquote | Produktverantwortung, Welle 1 |
+| ~~A-08~~ | ~~Richtprämie und Herkunft der Tarifdaten~~ | — | **Geschlossen:** Tarife liegen als PDF und Excel vor. Anzeige als Spanne aus eigenem Tarifwerk. Siehe [`13_TARIFWERK.md`](13_TARIFWERK.md) und ADR-0012 |
+| **A-11** | **Ist die Anzeige der Prämien je Versicherer vertraglich zulässig?** Die Tarifdaten gehören den Trägern | Bau von M2; ein Träger ohne Erlaubnis fließt nicht in die Spanne ein | Produktverantwortung je Träger, **vor** Welle 1 |
+| A-12 | Versicherungssteuersätze je Land und Sparte | Bruttoprämie der Indikation | Steuerberatung |
 | **A-09** | **Versandweg für Vorgangsmails**: Transaktionsdienst mit AVV und EU-Standort oder eigener Relay | Welle 2, Zustellbarkeit der Angebotsanfragen | Betrieb + Datenschutz |
 | A-04 | Signaturanbieter und erreichbare Signaturstufe | Antragsstrecke | Produktverantwortung, Rechtsberatung |
 | A-05 | Notwendigkeit einer Datenschutz-Folgenabschätzung für Scoring und Profiling | Produktivgang von M1 und M8 | Datenschutzbeauftragte Person |

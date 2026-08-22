@@ -16,6 +16,8 @@
 | **D10** | Historisch relevante Datensätze werden versioniert, nicht überschrieben. | Betrifft `Vertragsversion`, `Angebot`, `Dokumentversion`, `Produktschema`. |
 | **D11** | `VERSICHERER` ist eine eigene Entität; `Produktdefinition`, `Übermittlung` und `Angebot` verweisen darauf. | Als Mehrfachagent stehen mehrere Träger zur Verfügung. Eine Anfrage fächert sich auf, mehrere Angebote kommen zurück (Kapitel 11). |
 | **D12** | Ein Angebot trägt Auswahlkennzeichen **und** Auswahlbegründung; ohne Begründung ist keine Auswahl möglich. | Die Empfehlung aus mehreren Angeboten ist dokumentationspflichtig. Eine Begründung, die nachträglich entstehen soll, entsteht nie. |
+| **D13** | `TARIFWERK` ist versioniert und freigabepflichtig; die Rechenregel liegt als Daten vor, nicht als Programmcode. | Die Tarife kommen aus Excel und PDF und ändern sich. Als Code wäre jede Anpassung ein Entwicklungsauftrag, und die Anzeige veraltete unbemerkt ([`13_TARIFWERK.md`](13_TARIFWERK.md)). |
+| **D14** | Jede angezeigte Richtprämie wird mit den verwendeten Tarifwerk-Versionen protokolliert. | „Warum stand da 480 €?" muss acht Monate später aus den Daten beantwortbar sein, nicht aus der Erinnerung. |
 
 ---
 
@@ -322,6 +324,23 @@ Bonitätsdaten. Keines davon hat im MVP einen dokumentierten Zweck (Prinzip P8).
 | `laender` | enum[] | `AT`, `DE` — nicht jeder Träger ist in beiden Märkten verfügbar |
 | `aktiv` | bool | |
 
+### TARIFWERK — versionierte Rechengrundlage
+
+| Feld | Typ | Anmerkung |
+|---|---|---|
+| `versicherer_id`, `produkt_code`, `land` | uuid, text, enum | Ein Werk je Träger, Produkt und Markt |
+| `version` | int | fortlaufend |
+| `gueltig_ab`, `gueltig_bis` | date | überschneidungsfrei erzwungen |
+| `status` | enum | `ENTWURF`, `FREIGEGEBEN`, `ABGELOEST` |
+| `quelle_dokument_id` | uuid | importiertes Original-Excel im Dokumentenmanagement |
+| `pruefsumme_quelle` | text | SHA-256 — belegt, welche Fassung importiert wurde |
+| `importiert_von`, `freigegeben_von` | uuid | **müssen verschieden sein** — Vier-Augen-Prinzip |
+
+Untergeordnet: `TARIFPOSITION` (Basisprämie je Merkmalskombination),
+`TARIFFAKTOR` (Merkmal, Operation, Faktor, **Reihenfolge**), `TARIFREGEL`
+(Mindest- und Höchstprämie, Ausschlusskriterien), `VERSICHERUNGSSTEUER`
+(Land, Sparte, Satz, Gültigkeit).
+
 ### ANGEBOT — Ergänzungen gegenüber Fassung 1.0
 
 | Feld | Typ | Anmerkung |
@@ -331,6 +350,18 @@ Bonitätsdaten. Keines davon hat im MVP einen dokumentierten Zweck (Prinzip P8).
 | `auswahlgrund` | enum | `BESTER_PREIS`, `DECKUNGSUMFANG`, `SELBSTBEHALT`, `REVIERABDECKUNG`, `KUNDENWUNSCH`, `EINZIGER_ANBIETER`, `SONSTIGES` |
 | `auswahlbegruendung` | text | **Pflicht.** Katalogwert allein genügt nicht |
 | `ausgewaehlt_von`, `ausgewaehlt_am` | uuid, timestamptz | Wer wann entschieden hat |
+
+### VORGANG — Ergänzungen für die Abweichungsmessung
+
+| Feld | Typ | Anmerkung |
+|---|---|---|
+| `indikation_von`, `indikation_bis` | numeric(14,2) | Die Spanne, die der Website-Besucher gesehen hat |
+| `indikation_tarifwerke` | jsonb | Verwendete Werke mit Version — Grundlage der Nachvollziehbarkeit |
+| `indikation_am` | timestamptz | Stichtag der Berechnung |
+
+Der Vergleich dieser Felder mit der später eingetroffenen `angebot.praemie` ist
+die einzige Kennzahl, die die Güte des Tarifwerks misst. Ohne sie verfällt es
+still.
 
 ### MARKETINGKAMPAGNE
 
@@ -430,7 +461,8 @@ White-Label-Marken für große Händlerketten, Vertriebseinheiten.
 | Punkt | Auswirkung | Klärung durch |
 |---|---|---|
 | Produktspezifische Pflichtfelder je Sparte und je Träger | `produktdaten` bleibt vorerst schwach spezifiziert. Bei E-Mail-Anbindung erhebt man sie aus den Antragsformularen der Versicherer | Innendienst je Träger, Welle 1 |
-| Tarifdaten für eine unverbindliche Richtprämie | Entscheidet über den Zuschnitt von M2 | **A-08** |
+| Vertragliche Zulässigkeit der Prämienanzeige je Träger | Ein Träger ohne Erlaubnis fließt nicht in die Spanne ein | **A-11** |
+| Versicherungssteuersätze je Land und Sparte | Bruttoprämie der Indikation | **A-12** |
 | Provisionsmodell je Organisationsrolle ist unbestimmt | `Vereinbarung` bleibt grob | Geschäftsführung |
 | Schadenmodell ist nicht Bestandteil dieser Fassung | Kein `Schaden`-Entitätsbereich | eigene Architekturphase |
 | Zahlungs- und Mahnwesen ist offen | Keine `Zahlung`-Entität | **A-06** |
