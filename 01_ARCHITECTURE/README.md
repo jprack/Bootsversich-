@@ -39,7 +39,7 @@
 | [`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md) | Serveraufbau, Netz, Datenbank im Eigenbetrieb, Sicherungen, E-Mail-Zustellbarkeit, Einrichtungsreihenfolge | Betrieb |
 | [`13_TARIFWERK.md`](13_TARIFWERK.md) | Aus Excel und PDF wird eine versionierte, rechenbare Grundlage für die Richtprämie auf der Website | Produkt, Innendienst |
 | [`14_TARIFANALYSE.md`](14_TARIFANALYSE.md) | Auswertung der drei realen Tarifquellen, elf Befunde im eigenen Entwurfstarif, Ableitung der Import-Vorlage | Produkt, Innendienst |
-| [`vorlagen/`](vorlagen/) | `tarif_import_vorlage.xlsx` — sieben Blätter, mit Beispielzeilen aus den echten Tarifen und mitrechnender Prüfung | Innendienst |
+| [`vorlagen/`](vorlagen/) | `tarif_import_vorlage.xlsx` — sieben Blätter mit Beispielzeilen und mitrechnender Prüfung · `b1_bandluecke.xlsx` — interpolierte Sätze für die Bandlücke 70.000–170.000 | Innendienst |
 | [`adr/`](adr/) | Architekturentscheidungen mit Kontext, Alternativen und Konsequenzen | Architektur |
 
 **Empfohlene Lesereihenfolge:** 01 → 03 → 04 → 07 → **11** → **13** → **14** → 02 → **12** → 05 → 06 → 08 → 09 → 10.

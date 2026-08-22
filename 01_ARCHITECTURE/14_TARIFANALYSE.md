@@ -120,7 +120,7 @@ Plausibilitätsprüfung braucht.
 
 | # | Befund | Wirkung |
 |---|---|---|
-| **B1** | **Lücke in den Versicherungssummen-Bändern.** Die Bänder lauten „< 70.000" und „170.000 – 300.000". Der Bereich **70.000 – 170.000 fehlt** — in allen vier Kaskotabellen | Ein Boot im Wert von 100.000 € erhält keinen Satz. Das Änderungsblatt erwähnt am 06.03.2023 einen „Sprung bei 100.000", der „durch Formel ersetzt" wurde — der Sprung ist offenbar zurückgekehrt |
+| **B1** | **Lücke in den Versicherungssummen-Bändern.** Auflösung in §6a Die Bänder lauten „< 70.000" und „170.000 – 300.000". Der Bereich **70.000 – 170.000 fehlt** — in allen vier Kaskotabellen | Ein Boot im Wert von 100.000 € erhält keinen Satz. Das Änderungsblatt erwähnt am 06.03.2023 einen „Sprung bei 100.000", der „durch Formel ersetzt" wurde — der Sprung ist offenbar zurückgekehrt |
 | **B2** | **Widerspruch zwischen Zuschlag und Annahmerichtlinie.** „Segelboote älter 20 Jahre +10 %" steht neben „Anfragepflichtig sind: Wassersportfahrzeuge älter als 15 Jahre" | Ein 21 Jahre altes Segelboot ist anfragepflichtig. Der Zuschlag kann nie zur Anwendung kommen — entweder ist die Altersgrenze falsch oder der Zuschlag überflüssig |
 | **B3** | **Segelyacht-Haftpflicht folgt nicht der eigenen Regel.** Das Änderungsblatt hält am 28.12.2023 fest: „Aufschlag von HP 5 Mio auf 10 Mio **immer 30 %**". Die Motoryacht-Tabelle setzt das per Formel um (× 1,3). Die Segelyacht-Tabelle nicht: 65→75 (+15,4 %), 120→150 (+25 %), 160→210 (+31,3 %), 200→250 (+25 %) | Vier verschiedene Aufschläge, wo einer dokumentiert ist |
 | **B4** | **Fehlende Mindestprämie Haftpflicht.** Das Änderungsblatt nennt am 12.12.2023 „75 € Mindestprämie Brutto". In den Haftpflicht-Blättern steht keine | Bei kleinen Booten kann die Prämie unter die Untergrenze fallen |
@@ -141,6 +141,118 @@ Plausibilitätsprüfung braucht.
 | # | Befund | Wirkung |
 |---|---|---|
 | **B11** | **Tarif und Provision sind vermischt.** Q3 enthält Endkundenprämie, Steuer, Nettoprämie **und** Provision (durchgehend 35 %) in einer Tabelle. Zusätzlich Gleitkomma-Artefakte wie `8,917927927927934` statt `8,92` | Die Provision ist keine Eigenschaft des Tarifs, sondern der Vereinbarung mit dem Träger. Vermischt lässt sich weder das eine noch das andere sauber pflegen. Die Gleitkommareste bestätigen die Festlegung aus ADR-0004 |
+
+---
+
+## 6a. Auflösung von B1 — die Bandlücke 70.000 bis 170.000
+
+### Zuerst der Einwand
+
+Die Interpolation ist gerechnet und liegt bei (siehe unten). Vorher ein Befund,
+der sie möglicherweise überflüssig macht.
+
+Die Bandleiter lautet in allen vier Kaskotabellen:
+
+```
+< 70.000  |  170.000 – 300.000  |  300.000 – 500.000  |  500.000 – 1.000.000
+          ↑                     ↑                     ↑
+       LÜCKE                lückenlos             lückenlos
+```
+
+**Jede andere Bandgrenze ist lückenlos.** 300.000 schließt an 300.000 an,
+500.000 an 500.000. Nur an dieser einen Stelle klafft ein Loch — und zwar in
+allen vier Tabellen identisch, auf beiden Blättern, in beiden Revieren.
+
+Das Muster passt zu einem **Tippfehler**: `170.000` statt `70.000`. Dann lautet
+das Band `70.000 – 300.000`, die Leiter ist durchgehend, und es gibt nichts zu
+interpolieren. Ein versehentlich getipptes „1" erklärt den Befund vollständig;
+ein bewusst ausgelassener Wertebereich von 100.000 € erklärt ihn nicht.
+
+**Das ist keine mathematische Frage, sondern eine Erinnerungsfrage.** Wer die
+Tabelle 2023 gebaut hat, weiß es. Deshalb sind unten beide Varianten gerechnet.
+
+### Variante A — Tippfehler
+
+Band `170.000 – 300.000` wird zu `70.000 – 300.000`. Keine neuen Sätze,
+keine neue Zeile, keine Pflege. Wirkung: Ein Boot für 120.000 € zahlt im Mittel
+über alle 23 Kombinationen **675 €**.
+
+### Variante B — interpoliert
+
+Zwischen den Bandmitten 35.000 und 235.000 wird auf die neue Bandmitte 120.000
+interpoliert, in zwei Ausprägungen:
+
+| Verfahren | Formel | Wann angemessen |
+|---|---|---|
+| **geometrisch** (empfohlen) | `r = r₁ · (x/x₁)^(ln(r₂/r₁) / ln(x₂/x₁))` | Wenn die Sätze proportional fallen — was hier zutrifft |
+| linear | `r = r₁ + (r₂−r₁) · (x−x₁)/(x₂−x₁)` | Wenn sie gleichmäßig fallen |
+
+**Warum geometrisch:** Die eigenen Sätze fallen unterhalb von 170.000 steil und
+laufen darüber fast flach. Segelyacht Mittelmeer, Selbstbehalt 2.500:
+0,70 % → 0,46 % → 0,46 % → 0,45 %. Der Abfall geschieht fast vollständig im
+unteren Bereich. Eine proportionale Interpolation bildet diesen konvexen Verlauf
+ab, eine lineare überschätzt ihn.
+
+Die Wahl kostet je nach Kombination **2 bis 12 Prozent Prämie** — im Mittel
+741 € (geometrisch) gegen 794 € (linear) bei 120.000 € Versicherungssumme.
+
+Die Annahme über die Bandmitten ist unkritisch: Rechnet man statt mit den Mitten
+(35.000 / 235.000 / 120.000) mit den Obergrenzen (70.000 / 300.000 / 170.000),
+ändern sich die Sätze um **unter einem Basispunkt**.
+
+### Die Sätze
+
+Vollständig in [`vorlagen/b1_bandluecke.xlsx`](vorlagen/b1_bandluecke.xlsx) —
+mit Formeln, sodass sich die Sätze neu berechnen, wenn die Ankerwerte oder die
+Bandmitten geändert werden. Auszug:
+
+| Blatt | Revier | Bauart | SB | < 70.000 | **neu, geom.** | neu, linear | 170.000–300.000 |
+|---|---|---|---|---|---|---|---|
+| SY | Binnen | Komfort | 500 | 0,65 % | **0,50 %** | 0,56 % | 0,43 % |
+| SY | Binnen | Komfort | 1.000 | 0,55 % | **0,43 %** | 0,48 % | 0,38 % |
+| SY | Binnen | Sport | 500 | 0,66 % | **0,59 %** | 0,61 % | 0,55 % |
+| SY | Mittelmeer | Komfort | 1.000 | 0,80 % | **0,60 %** | 0,68 % | 0,51 % |
+| SY | Mittelmeer | Sport | 1.000 | 0,83 % | **0,72 %** | 0,76 % | 0,66 % |
+| MY | Binnen | Verdränger | 1.000 | 0,83 % | **0,67 %** | 0,73 % | 0,60 % |
+| MY | Binnen | Gleiter | 1.000 | 0,87 % | **0,78 %** | 0,81 % | 0,74 % |
+| MY | Mittelmeer | Verdränger | 1.000 | 0,88 % | **0,72 %** | 0,78 % | 0,65 % |
+| MY | Mittelmeer | Gleiter | 1.000 | 0,92 % | **0,83 %** | 0,86 % | 0,79 % |
+
+**23 Kombinationen sind interpolierbar. 13 sind es nicht**, weil mindestens ein
+Ankerwert fehlt — bei zehn davon fehlen beide. Diese Zellen sind im
+Entwurfstarif leer, vermutlich weil die Kombination nicht angeboten wird. Das
+ist zu bestätigen, nicht zu erraten. Drei Zeilen haben einen oberen, aber keinen
+unteren Wert; dort ist zu klären, ob der Selbstbehalt unterhalb von 170.000
+bewusst entfällt.
+
+### Was die Interpolation kostet
+
+Ein zusätzliches Band erzeugt eine zusätzliche Prämienstufe. Am Beispiel
+Segelyacht Binnen Komfort, Selbstbehalt 500:
+
+| | bei 69.999 € | bei 70.000 € | bei 170.000 € | bei 170.001 € |
+|---|---|---|---|---|
+| **Variante A** (Tippfehler) | 455 € | **301 €** | 731 € | 731 € |
+| **Variante B** (geometrisch) | 455 € | **350 €** | 850 € | **731 €** |
+| Variante B (linear) | 455 € | **392 €** | 952 € | **731 €** |
+
+Variante A hat **eine** Stufe, Variante B hat **zwei**. Dafür ist die erste
+Stufe bei B kleiner (−105 € statt −154 €).
+
+Solche Stufen sind bei gebänderten Tarifen normal und keine Besonderheit dieses
+Entwurfs — auch NAUTIMA hat sie: ein Segelboot für 30.000 € zahlt im Mittelmeer
+bei 500 € Selbstbehalt 381 €, eines für 30.001 € nur 363 €. Auf einer Website,
+die eine Richtprämie zeigt, sieht das trotzdem nach einem Fehler aus. Wer die
+Stufen nicht möchte, braucht keine Bänder, sondern eine stetige Funktion — das
+wäre eine Tarifentscheidung, keine Datenpflege.
+
+### Empfehlung
+
+1. **Zuerst klären, ob es ein Tippfehler ist.** Eine Rückfrage bei der Person,
+   die die Tabelle gepflegt hat, ersetzt jede Rechnung.
+2. Ist es keiner: die **geometrischen** Sätze übernehmen.
+3. In beiden Fällen die 13 leeren Kombinationen ausdrücklich als „nicht
+   angeboten" kennzeichnen, statt sie leer zu lassen.
 
 ---
 
