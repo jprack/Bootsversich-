@@ -5,7 +5,7 @@
 | Feld | Wert |
 |---|---|
 | Modul | `02_CORE_CRM` |
-| Fassung | 1.0 |
+| Fassung | 1.1 |
 | Datum | 2026-08-22 |
 | Status | Fachkonzept zur Freigabe |
 | Grundlage | [`01_ARCHITECTURE/`](../01_ARCHITECTURE/README.md) Fassung 1.3 |
@@ -90,6 +90,7 @@ Versicherer. Die Begründungen stehen in
 | 8 · Reporting | [`09_DASHBOARD_UND_REPORTING.md`](09_DASHBOARD_UND_REPORTING.md) |
 | 9 · Roadmap | [`11_SKALIERUNG_ROADMAP.md`](11_SKALIERUNG_ROADMAP.md) |
 | 10 · Umsetzung WordPress | [`12_UMSETZUNG_WORDPRESS.md`](12_UMSETZUNG_WORDPRESS.md) |
+| — Startkonfiguration (C-02, C-03, C-04) | [`13_STARTKONFIGURATION.md`](13_STARTKONFIGURATION.md) |
 | — Kundenakte | [`05_KUNDENAKTE.md`](05_KUNDENAKTE.md) |
 | — Vertrags- und Bootsverwaltung | [`06_VERTRAG_UND_BOOT.md`](06_VERTRAG_UND_BOOT.md) |
 | — Dokumentenmanagement | [`08_DOKUMENTE.md`](08_DOKUMENTE.md) |
@@ -137,11 +138,12 @@ Für die Geschäftsführung genügen Summary, 01, 09 und 11.
 | ID | Punkt | Blockiert | Zu klären durch |
 |---|---|---|---|
 | **C-01** | Führt der Innendienst die Beratungsdokumentation im CRM oder außerhalb? Bei Mehrfachagenten ist sie pflichtig und gehört an den Vorgang | Kundenakte, Angebotsauswahl | Rechtsberatung (Fortsetzung von A-10) |
-| **C-02** | Kundennummernkreis: fortlaufend je Mandant, oder sprechend? Rückwirkend nicht änderbar | Erstbefüllung | Produktverantwortung |
-| **C-03** | Bestandsübernahme: Gibt es Altdaten aus einer Vorgängerlösung, und in welcher Qualität? | Reihenfolge in Welle 1 | Produktverantwortung |
-| **C-04** | Wie viele Innendienst-Arbeitsplätze gleichzeitig? Bestimmt, ob `wp-admin` als Werkbank genügt | Umsetzung Oberfläche | Produktverantwortung |
+| ~~**C-02**~~ | ~~Kundennummernkreis~~ **Entschieden: fortlaufend ab `000001`, mandantenübergreifend, ohne Bedeutung** — [Kapitel 13](13_STARTKONFIGURATION.md) §2, [ADR-0006](adr/0006-kundennummer-fortlaufend.md) | — | — |
+| ~~**C-03**~~ | ~~Bestandsübernahme~~ **Entschieden: keine. Start auf leerer Datenbank** — [Kapitel 13](13_STARTKONFIGURATION.md) §3 | — | — |
+| ~~**C-04**~~ | ~~Arbeitsplätze~~ **Entschieden: zwei** — [Kapitel 13](13_STARTKONFIGURATION.md) §4 | — | — |
 | **C-05** | Provisionsmodell je Organisationsrolle — Struktur ist vorbereitet, Werte fehlen | Dealer Hub, Reporting | Geschäftsführung |
 | **C-06** | Aufbewahrungsfristen je Dokumentklasse in AT und DE | Löschkonzept | Rechts- und Steuerberatung |
+| **C-07** | Führt der Versicherer bereits vermittelte Verträge, die im CRM fehlen? | Verlängerungslauf, Provisionsprüfung | Produktverantwortung mit dem Versicherer |
 
 ---
 

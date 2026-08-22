@@ -11,3 +11,4 @@ modulspezifische Festlegungen. Bei Widerspruch gewinnt die Gesamtarchitektur.
 | [0003](0003-versicherer-als-organisationsrolle.md) | Versicherer und Hersteller werden als Organisationsrollen geführt | vorgeschlagen |
 | [0004](0004-automationen-als-daten.md) | Automatisierungen sind Daten, keine Programmierung | vorgeschlagen |
 | [0005](0005-wordpress-als-werkbank.md) | WordPress-Adminbereich als CRM-Werkbank | vorgeschlagen |
+| [0006](0006-kundennummer-fortlaufend.md) | Kundennummer: fortlaufend ab 1, ohne Bedeutung | **entschieden** |

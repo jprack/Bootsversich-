@@ -12,6 +12,15 @@
 | **R6** | Jeder Fehlzugriff erzeugt einen Auditeintrag | Ein Angriff, der nichts hinterlässt, wird nicht bemerkt |
 | **R7** | Sichtbarkeit ist eine Datenbankbedingung, kein Anwendungsfilter | Ein vergessener Filter wäre sonst ein Datenleck |
 
+> **Ausnahme zu R5 im Startbetrieb.** Das Unternehmen startet mit **zwei**
+> Personen (C-04). Eine organisatorische Trennung von Vorbereiten und Freigeben
+> bricht dann bei Urlaub und Krankheit. Deshalb ist die **Alleinfreigabe**
+> zugelassen — mit Pflichtbegründung, Kennzeichen `alleinfreigabe`, eigenem
+> Auditeintrag und monatlichem Bericht an die Geschäftsführung. R5 wird damit
+> von einer vorbeugenden zu einer nachweisenden Kontrolle. **Ab der dritten
+> Person wird die Alleinfreigabe abgeschaltet.** Begründung und Umsetzung:
+> [`13_STARTKONFIGURATION.md`](13_STARTKONFIGURATION.md) §4.5.
+
 ---
 
 ## 2. Sieben Rollen, nicht sechs

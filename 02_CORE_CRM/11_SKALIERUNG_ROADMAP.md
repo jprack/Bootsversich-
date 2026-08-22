@@ -149,7 +149,7 @@ zuerst, was andere blockiert.
 | Regelkatalog fachlich ausarbeiten | sofort | Braucht keinen Entwickler |
 | Tarife auf die Import-Vorlage zuordnen | sofort | Braucht keinen Entwickler |
 | Datenschutzunterlagen | sofort | Läuft parallel, verhindert später Stillstand |
-| Bestandsübernahme vorbereiten | sofort | Datenqualität prüfen (**C-03**) |
+| Startpaket des Regelkatalogs festlegen | sofort | Zwölf Regeln statt 53 — [Kapitel 13](13_STARTKONFIGURATION.md) §4.6 |
 
 **Schnitt 1 ist der Engpass der gesamten Roadmap.** Stehen die Verträge, können
 sechs Stränge parallel arbeiten. Entstehen sie erst mit dem Code, kollabieren
@@ -165,7 +165,8 @@ sie auf einen.
 | **CR-02** | Der erste Regellauf erzeugt tausende Aufgaben | Das System wird ignoriert, dauerhaft | **Trockenlauf gegen den echten Bestand vor jeder Aktivierung.** Lastschutz von Beginn an |
 | **CR-03** | Automatische Dublettenzusammenführung wird „aus Bequemlichkeit" eingebaut | Praktisch nicht rückgängig zu machen | Modell und API kennen nur Vorschläge |
 | **CR-04** | Die Kundenakte lädt langsam | Der Innendienst weicht auf Excel aus, und das Modul ist gescheitert | Gebündelter `/dossier`-Endpunkt, Reiter werden nachgeladen, Leistungsziele als Abnahmekriterium |
-| **CR-05** | Bestandsübernahme unterschätzt | Verzug, schlechte Datenqualität von Anfang an | Eigener Strang, Datenqualität früh prüfen (**C-03**) |
+| ~~**CR-05**~~ | ~~Bestandsübernahme unterschätzt~~ | **Entfällt** — Start auf leerer Datenbank (C-03 entschieden) | — |
+| **CR-10** | Alleinfreigabe wird bei zwei Personen zur Gewohnheit statt zur Ausnahme | Die einzige wirtschaftlich bindende Kontrolle wird faktisch wirkungslos | Pflichtbegründung, Auditeintrag, monatlicher Bericht ([Kapitel 13](13_STARTKONFIGURATION.md) §4.5) |
 | **CR-06** | Regelpflege hat keine verantwortliche Person | Regeln veralten still, niemand merkt es | Benannte Person; monatlicher Bericht Regelwirkung |
 | **CR-07** | Die API entsteht erst mit der Umsetzung | Parallelisierung entfällt, Termin vervielfacht sich | Schnitt 1 ist unverhandelbar |
 | **CR-08** | Einwilligungen werden nachlässig erfasst | Ganze Segmente sind nicht ansprechbar, rückwirkend nicht heilbar | Ohne Rechtsgrundlage entsteht kein Datensatz — technisch erzwungen |
@@ -179,9 +180,8 @@ sie auf einen.
 |---|---|
 | **API-Vertrag und Ereigniskatalog festschreiben** | Der einzige Hebel auf den Termin |
 | Regelkatalog fachlich ausarbeiten | Braucht keinen Entwickler und bestimmt, wie gut das System im Alltag wirkt |
-| **C-02** klären: Kundennummernkreis | Rückwirkend nicht änderbar |
-| **C-03** klären: Gibt es Altdaten, in welcher Qualität? | Bestimmt die Reihenfolge in Version 1 |
-| **C-04** klären: Wie viele Arbeitsplätze gleichzeitig? | Entscheidet über die Oberflächenarchitektur |
+| ~~**C-02**, **C-03**, **C-04**~~ | **Entschieden** — [Kapitel 13](13_STARTKONFIGURATION.md) |
+| **C-07** klären: Bestand beim Versicherer | Muss vor dem ersten Verlängerungslauf beantwortet sein |
 
 | Bewusst später | Warum |
 |---|---|

@@ -34,7 +34,10 @@ Sachbearbeitung. Tastaturbedienung und Massenerfassung sind schwächer als in
 einer eigenen Anwendung. Jeder Bildschirm braucht einen API-Aufruf statt einer
 Datenbankabfrage.
 
-**Grenze, an der neu zu entscheiden ist (`C-04`):** Ab etwa fünfzehn
+**Ausgangslage (`C-04` entschieden):** zwei gleichzeitige Arbeitsplätze. Die
+Entscheidung ist damit unstrittig.
+
+**Grenze, an der neu zu entscheiden ist:** Ab etwa fünfzehn
 gleichzeitigen Arbeitsplätzen mit dauerhafter Erfassung überwiegt der Nachteil.
 Dann wird die Werkbank eine eigene Anwendung — gegen dieselbe API, ohne
 Domänenänderung.

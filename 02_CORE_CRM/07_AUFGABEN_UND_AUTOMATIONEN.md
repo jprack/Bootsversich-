@@ -85,6 +85,13 @@ Aus `01_CRM_ENGINE` übernommen und im Lasttest belegt:
 Ohne Lastschutz erzeugt der erste Verlängerungslauf über den vollen Bestand
 mehrere tausend Aufgaben an einem Tag — und das System wird ignoriert.
 
+**Was das im Startbetrieb bedeutet.** Zwei Personen (C-04) ergeben **50 fällige
+Aufgaben am Tag** — das ist die Leistungsgrenze des Systems, nicht die des
+Servers. Deshalb sind zum Start höchstens **zwölf** der Regeln aus dem Katalog
+aktiv: die fristsichernden, nicht die gelegenheitssuchenden. Jede weitere wird
+einzeln aktiviert, nach Trockenlauf, mit zwei Wochen Beobachtung des Rückstaus.
+Aufstellung: [`13_STARTKONFIGURATION.md`](13_STARTKONFIGURATION.md) §4.6.
+
 ---
 
 ## Teil B — Automationen

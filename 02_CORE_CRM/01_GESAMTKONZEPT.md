@@ -101,7 +101,7 @@ Der letzte Punkt ist der teuerste im Alltag und der wertvollste im Ernstfall.
 | Telefon / Messe | Lead, manuell erfasst | Einwilligung wird nachgeholt, sonst keine Ansprache |
 | Kundenportal (M7) | Datenänderung, Dokument, Vorgangsauslösung | Kunde ändert nur Eigenes, serverseitig geprüft |
 | Versicherer per E-Mail | Angebot, Police, Dokument | Über den Posteingang aus Kapitel 11 der Architektur |
-| Bestandsübernahme | alles | Einmalig, mit eigenem Prüflauf (**C-03**) |
+| Nacherfassung bestehender Verträge | Kunde, Vertrag, Boot | **Keine Migration** (C-03 entschieden). Anlassbezogen mit `quelle = NACHERFASSUNG` — [Kapitel 13](13_STARTKONFIGURATION.md) §3 |
 
 ### 5.2 Der Lebenszyklus
 

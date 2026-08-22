@@ -85,6 +85,19 @@ Hochskalieren eine Sache von Minuten.
 | `core-01` | 4 vCPU, 8 GB | API und Worker; wächst mit der Zahl der Vorgänge, nicht der Besucher |
 | `db-01` | **dedizierte vCPU**, 16 GB, NVMe | Eine Datenbank auf gemeinsam genutzten vCPU liefert unvorhersagbare Antwortzeiten. Das ist der eine Posten, an dem nicht gespart wird |
 
+**Nachtrag zum Start (C-04 entschieden: zwei Arbeitsplätze).** Die Last entsteht
+durch Besucher, Vorgänge, Dokumente und Hintergrundläufe — nicht durch den
+Innendienst. Zwei Arbeitsplätze senken deshalb nur den Anteil der Werkbank.
+Startgrößen: `web-01` 4 vCPU / 8 GB, `core-01` 2 vCPU / 4 GB, `db-01`
+**dedizierte vCPU** / 8 GB NVMe. **Die Dedizierung von `db-01` bleibt — hier
+wird auch bei zwei Nutzern nicht gespart.**
+
+Was durch die kleine Nutzerzahl **nicht** kleiner wird: Sicherung,
+Wiederherstellungstest, Protokollierung, Verschlüsselung, Überwachung. Der
+Betriebsaufwand aus §7 hängt an der Zahl der Systeme, nicht an der Zahl der
+Personen. Herleitung:
+[`02_CORE_CRM/13_STARTKONFIGURATION.md`](../02_CORE_CRM/13_STARTKONFIGURATION.md) §4.3.
+
 ### Netz und Zugriff
 
 | Regel | Umsetzung |

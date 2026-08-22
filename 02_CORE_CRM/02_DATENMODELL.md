@@ -214,7 +214,7 @@ Architektur. Gleiche Felder, jetzt als Rolle geführt.
 
 | Feld | Typ | Pflicht | Beschreibung |
 |---|---|---|---|
-| `kundennummer` | text(20) | ja | Fachlich, extern kommunizierbar, eindeutig je Mandant (**C-02**) |
+| `kundennummer` | text(20) | ja | Fachlich, extern kommunizierbar. **Global eindeutig, fortlaufend ab `000001`, ohne Bedeutung** — [ADR-0006](adr/0006-kundennummer-fortlaufend.md), [Kapitel 13](13_STARTKONFIGURATION.md) §2 |
 | `art` | enum | ja | `PRIVAT`, `GEWERBE`, `VEREIN`, `GEMEINSCHAFT` |
 | `organisation_id` | uuid | nein | Bei `GEWERBE` und `VEREIN` |
 | `bezeichnung` | text(200) | ja | Abgeleitet oder frei: „Familie Berger", „Segelclub Attersee" |
