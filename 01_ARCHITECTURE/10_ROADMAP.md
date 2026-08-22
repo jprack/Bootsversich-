@@ -87,13 +87,14 @@ parallelisierbar oder verschiebbar.
 
 | Ergebnis | Warum jetzt |
 |---|---|
-| Hostingentscheidung, Umgebungen, Auslieferungskette | Ohne Entscheidung kein Betrieb (**A-03**) |
+| Hetzner einrichten nach der Reihenfolge in [`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md) §8 | Zwölf prüfbare Schritte. Wiederherstellungsprobe und dritte Sicherungskopie **vor** der ersten echten Person |
 | Identitätsanbieter, Rollen, Mehrfaktor | Jedes Modul braucht Anmeldung |
 | PostgreSQL-Kernschema, Mandantentrennung, Migrationen | Nachrüsten wäre die teuerste aller Änderungen |
 | Auditprotokoll, append-only | Ein Protokoll ohne Vergangenheit ist wertlos |
 | Ereignisbus mit Outbox | Nachträgliche Entkopplung bedeutet, alles neu zu schreiben |
 | WordPress-Grundinstallation, Theme, `core-bridge` | Grundlage jeder Oberfläche |
-| Sicherung und erste Wiederherstellungsprobe | Eine ungeprobte Sicherung ist keine |
+| Sicherung, dritte Kopie außerhalb des Kontos, erste Wiederherstellungsprobe | Eine ungeprobte Sicherung ist keine. Bei selbst betriebener Datenbank gilt das doppelt |
+| Absenderdomänen, SPF, DKIM, DMARC | Grundlage des gesamten Geschäftsprozesses (ADR-0010) |
 | Verzeichnis von Verarbeitungstätigkeiten, Datenschutzhinweise | Vor der ersten echten Person, nicht danach |
 
 **Abnahme:** Eine Person meldet sich an, ein Datensatz wird angelegt, ein
@@ -111,14 +112,20 @@ kürzen. Jede hier gesparte Woche kostet später Monate.
 
 | Modul | Umfang |
 |---|---|
-| **M0** | Kontakt, Kunde, Organisation, Boot, Vertrag — Erfassung und Pflege |
+| **M0** | Kontakt, Kunde, Organisation, **Versicherer**, Boot, Vertrag — Erfassung und Pflege. **Zwei Mandanten (AT, DE)** ab Beginn, da die Zulassung für beide Märkte gilt |
 | **M2** | Öffentliche Website, Produktseiten, Rechner-Einstieg, Formular-Engine, Einwilligungen, Attribution |
 | **M1** | Lead, Aktivität, Aufgabe, Lead Score, Customer Value Score, Regelkatalog, Priorisierung — Übernahme aus `01_CRM_ENGINE` |
 | **M3** | Kampagne, Newsletter, Segmente, Brevo-Konnektor, Einwilligungsprüfung, Rücklaufsignale |
 
 **Abnahme:** Ein Formular auf der Website erzeugt einen bewerteten Lead mit
 Nachweis, der Vertrieb sieht ihn priorisiert in seiner Tagesliste, der Kontakt
-erhält einen Newsletter, ein Klick verändert den Score.
+erhält einen Newsletter, ein Klick verändert den Score. Beides in AT **und** DE,
+mit getrennten Rechtstexten.
+
+**Zu entscheiden in dieser Welle: A-08.** Zeigt die Website eine unverbindliche
+Richtprämie, oder ist sie eine reine Anfragestrecke? Ohne Online-Tarifierung
+(ADR-0010) bestimmt diese Frage den Zuschnitt von M2 und die zu erwartende
+Umwandlungsquote. Sie ist die wichtigste Produktentscheidung der Roadmap.
 
 **Damit ist der Fluss `Lead → CRM → Newsletter → Kunde` vollständig.**
 
@@ -139,19 +146,21 @@ entwerfen — das ist der größte Zeitvorteil der gesamten Roadmap.
 | **M10** | Vorgangstypen Anfrage, Angebot, Antrag, Änderung, **Verlängerung**; Zustandsmaschinen, Fristen, Eskalationen |
 | **M0+** | Vertragskern: Police, Deckung, Prämie, Vertragsversion, Verlängerungslogik |
 | **M7** | Kundenportal: Verträge, Boote, Dokumente, Änderungen, Verlängerung bestätigen, Datenschutzanliegen |
-| Adapter | Versicherer-Adapter: `Mock`, `Manuell`, `Real` als deaktiviertes Gerüst |
+| Adapter | **Versicherer-Adapter real: E-Mail** (ADR-0010) — ausgehendes Paket, Posteingang, Zuordnung, strukturierte Erfassung. Der Mock bleibt für Tests |
+| Vergleich | Fächerung an mehrere Träger, Angebotsvergleich, Auswahl mit Pflichtbegründung |
 | Adapter | Signatur-Adapter: `Mock` und `Manuell` |
 
 **Abnahme:** Ein Vorgang läuft vollständig von der Anfrage bis zum aktiven
-Vertrag — über den Mock-Adapter. Der Kunde sieht ihn im Portal. Eine
+Vertrag — **über den echten E-Mail-Weg an mindestens zwei Träger**, mit
+Vergleich und begründeter Auswahl. Der Kunde sieht ihn im Portal. Eine
 Verlängerung startet 90 Tage vor Hauptfälligkeit von selbst.
 
 **Damit ist der Fluss `Kunde → Vertrag → Renewal Workflow` vollständig.**
 
-**Blockierend:** **A-01** (Produktquelle) und **A-04** (Signaturanbieter). Beide
-verhindern nicht den Bau — die Adapterstruktur erlaubt die vollständige
-Entwicklung ohne sie. Sie verhindern den **Produktivgang**. Deshalb müssen
-beide Klärungen in Welle 1 beginnen, nicht in Welle 2.
+**Blockierend:** **A-09** (Versandweg für Vorgangsmails) und **A-04**
+(Signaturanbieter). A-09 ist neu und wiegt schwer: Landen Angebotsanfragen im
+Spamordner des Versicherers, merkt es niemand — es kommt einfach keine Antwort.
+SPF, DKIM und DMARC sind deshalb Abnahmekriterium, nicht Feinschliff.
 
 ---
 
@@ -229,7 +238,7 @@ Steuerungspunkt des gesamten Vorhabens.
 | **MS-4** | Erster Vertrag über Mock | Anfrage → Angebot → Prüfung → Freigabe → Signatur → Vertrag | 2 |
 | **MS-5** | Kundenportal live | Kunde sieht Vertrag, lädt Dokument, bestätigt Änderung | 2 |
 | **MS-6** | Erste Verlängerung automatisch | 90-Tage-Auslöser → Ansprache → Bestätigung → neue Version | 2 |
-| **MS-7** | Erste echte Produktivanbindung | Versicherer-Adapter real, Produktivgang freigegeben | 2/3 |
+| **MS-7** | Erste begründete Angebotsauswahl | Zwei Träger angefragt, zwei Angebote erfasst, Auswahl mit Begründung dokumentiert | 2 |
 | **MS-8** | Erster Partner produktiv | Händler empfiehlt, sieht Status, erhält Abrechnung | 3 |
 | **MS-9** | Steuerung auf Zahlen | Kosten je Lead und je Abschluss nach Kanal | 4 |
 | **MS-10** | KI im Alltag | Entwurf angenommen statt selbst geschrieben, mit Protokoll | 4 |
@@ -243,17 +252,19 @@ Deshalb beginnen sie früher, als es nötig erscheint.
 
 | Offener Punkt | Klärung beginnt | Muss vorliegen vor | Folge bei Verzug |
 |---|---|---|---|
-| **A-03** Hosting und Region | sofort | Welle 0 | Nichts kann beginnen |
-| **A-02** Gewerberechtliche Zulassung | sofort | erstem öffentlichem Angebot | Kein Vertrieb erlaubt |
-| **A-01** Produktquelle und Anbindung | sofort | MS-7 | Dauerhaft manueller Betrieb |
+| ~~A-01, A-02, A-03~~ | — | — | **geschlossen** (E-Mail · Mehrfachagent AT+DE · Hetzner) |
+| **A-08** Richtprämie auf der Website und Herkunft der Tarifdaten | sofort | Baubeginn M2 | M2 muss umgeschnitten werden |
+| **A-09** Versandweg für Vorgangsmails | Welle 0 | Welle 2 | Angebotsanfragen kommen nicht an — ohne Fehlermeldung |
 | **A-07** Auftragsverarbeitung (Brevo, Microsoft, KI) | Welle 0 | MS-3 beziehungsweise MS-10 | Kein Versand, keine KI |
+| **A-10** Beratungs- und Dokumentationspflichten für Mehrfachagenten | Welle 1 | MS-4 produktiv | Auswahlbegründung ggf. unzureichend |
 | **A-04** Signaturanbieter und Stufe | Welle 1 | MS-4 produktiv | Papierprozess |
 | **A-05** Datenschutz-Folgenabschätzung | Welle 1 | Produktivgang M1 | Scoring nicht einsetzbar |
 | **A-06** Zahlungsabwicklung | Welle 2 | Welle 3 | Versichererinkasso als Rückfall |
 
-**Muster:** Sechs von sieben Punkten sind keine technischen Fragen. Sie
-entscheiden trotzdem über den Termin. Wer die Roadmap steuern will, steuert
-diese Tabelle — nicht die Programmierung.
+**Muster:** Auch nach dem Schließen der ersten drei Punkte sind fast alle
+verbleibenden keine technischen Fragen. Sie entscheiden trotzdem über den
+Termin. Wer die Roadmap steuern will, steuert diese Tabelle — nicht die
+Programmierung.
 
 ---
 
@@ -261,7 +272,9 @@ diese Tabelle — nicht die Programmierung.
 
 | ID | Risiko | Wirkung | Gegenmaßnahme |
 |---|---|---|---|
-| **U-01** | Produktquelle bleibt dauerhaft ungeklärt | Manueller Betrieb bleibt | Der manuelle Adapter ist vollwertig und auditiert — kein Notbehelf, sondern eine tragfähige Betriebsart |
+| **U-01** | **Antwortzeit der Versicherer wird zum Nadelöhr** | Interessenten springen zwischen Anfrage und Angebot ab — die teuerste Stelle des Trichters | Fristüberwachung je Träger, Antwortzeit als Leitkennzahl in M11, Eskalation bei Überschreitung |
+| **U-11** | **Angebotsanfragen landen im Spam** | Keine Antwort, keine Fehlermeldung, kein Alarm | SPF, DKIM, DMARC als Abnahmekriterium; getrennte Absenderdomäne für Vorgangsmails; Überwachung der Zustellrate |
+| **U-12** | **Richtprämie und tatsächliches Angebot weichen ab** | Vertrauensverlust an der teuersten Stelle | Spanne statt Betrag, unübersehbare Kennzeichnung, gepflegte Tarifdaten mit benanntem Verantwortlichen — oder Weg A wählen |
 | **U-02** | WordPress-Anteil wächst schleichend, Fachdaten wandern in `wp_postmeta` | Die zentrale Trennung fällt, Sicherheit und Nachweisbarkeit sind verloren | Prinzip P1 ist ADR und wird in der Codeprüfung durchgesetzt; kein Fachdatum in WordPress-Tabellen |
 | **U-03** | Compliance beginnt erst am Ende | Produktivgang verschiebt sich um Monate | Strang E läuft ab Tag eins |
 | **U-04** | Frühzeitiger Bau von M8 und M11 | Aufwand ohne Datengrundlage | Wellenreihenfolge ist verbindlich |
@@ -278,10 +291,11 @@ diese Tabelle — nicht die Programmierung.
 
 | Sofort beginnen | Warum |
 |---|---|
-| Hostingentscheidung treffen (**A-03**) | Blockiert alles |
-| Gespräch mit der Produktquelle aufnehmen (**A-01**) | Längste Vorlaufzeit von allen Punkten |
+| **A-08 entscheiden**: Richtprämie oder reine Anfragestrecke | Bestimmt den Zuschnitt von M2 und die zu erwartende Umwandlung |
+| Hetzner nach der Reihenfolge in Kapitel 12 einrichten | Schritt 5 und 6 — Wiederherstellungsprobe und dritte Sicherungskopie — **vor** der ersten echten Person |
+| Absenderdomänen, SPF, DKIM, DMARC einrichten (**A-09**) | Ohne diese kommen Angebotsanfragen nicht an, und es fällt niemandem auf |
+| Pflichtfelder je Träger aus deren Antragsformularen erheben | Grundlage der Produktschemata; braucht keinen Entwickler und kann sofort laufen |
 | Datenschutzbeauftragte Person einbinden | Läuft parallel und verhindert später Stillstand |
-| Rechtliche Prüfung der Zulassung (**A-02**) | Ohne sie kein öffentlicher Vertrieb |
 | API-Verträge und Ereignisnamen festschreiben | Einziger Hebel für echte Parallelität |
 
 | Bewusst später | Warum |

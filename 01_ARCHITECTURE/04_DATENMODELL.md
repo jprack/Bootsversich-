@@ -14,6 +14,8 @@
 | **D8** | `mandant_id` in jeder Kerntabelle, durchgesetzt per Row Level Security. | Nachrüsten wäre eine Migration über den gesamten Bestand. |
 | **D9** | `Auditeintrag` ohne Fremdschlüssel, Bezug über `entitaet_typ` + `entitaet_id`. | Das Protokoll muss erhalten bleiben, auch wenn ein Datensatz anonymisiert wird. |
 | **D10** | Historisch relevante Datensätze werden versioniert, nicht überschrieben. | Betrifft `Vertragsversion`, `Angebot`, `Dokumentversion`, `Produktschema`. |
+| **D11** | `VERSICHERER` ist eine eigene Entität; `Produktdefinition`, `Übermittlung` und `Angebot` verweisen darauf. | Als Mehrfachagent stehen mehrere Träger zur Verfügung. Eine Anfrage fächert sich auf, mehrere Angebote kommen zurück (Kapitel 11). |
+| **D12** | Ein Angebot trägt Auswahlkennzeichen **und** Auswahlbegründung; ohne Begründung ist keine Auswahl möglich. | Die Empfehlung aus mehreren Angeboten ist dokumentationspflichtig. Eine Begründung, die nachträglich entstehen soll, entsteht nie. |
 
 ---
 
@@ -304,6 +306,32 @@ Bonitätsdaten. Keines davon hat im MVP einen dokumentierten Zweck (Prinzip P8).
 | `score_faktoren` | jsonb | Top-Faktoren der Bewertung — Pflicht (Prinzip P5) |
 | `verlustgrund` | enum | `KEINE_REAKTION`, `KEIN_BEDARF`, `PREIS`, `WETTBEWERB`, `NICHT_VERSICHERBAR`, `DUBLETTE`, `SONSTIGES` |
 
+### VERSICHERER — Risikoträger
+
+| Feld | Typ | Anmerkung |
+|---|---|---|
+| `name`, `kurzname` | text | |
+| `agenturnummer` | text | eigene Kennung beim Träger |
+| `kanal` | enum | `EMAIL`, `API`, `PORTAL` — **je Träger**, keine globale Einstellung (ADR-0010) |
+| `anfrage_postfach` | text | Zielpostfach für Angebotsanfragen |
+| `antrag_postfach` | text | abweichendes Postfach für Anträge, sofern vorhanden |
+| `betreffkonvention` | text | Vorlage, falls der Träger ein eigenes Format erwartet |
+| `tls_geprueft` | bool | Nimmt das Mailsystem TLS zuverlässig an? Bei `false` gehen **keine** Anlagen hinaus |
+| `smime_faehig` | bool | Ende-zu-Ende-Verschlüsselung möglich |
+| `antwortzeit_zusage_stunden` | int | Grundlage der Fristüberwachung |
+| `laender` | enum[] | `AT`, `DE` — nicht jeder Träger ist in beiden Märkten verfügbar |
+| `aktiv` | bool | |
+
+### ANGEBOT — Ergänzungen gegenüber Fassung 1.0
+
+| Feld | Typ | Anmerkung |
+|---|---|---|
+| `versicherer_id` | uuid | Von welchem Träger das Angebot stammt |
+| `ausgewaehlt` | bool | Genau ein Angebot je Anfrage darf `true` sein |
+| `auswahlgrund` | enum | `BESTER_PREIS`, `DECKUNGSUMFANG`, `SELBSTBEHALT`, `REVIERABDECKUNG`, `KUNDENWUNSCH`, `EINZIGER_ANBIETER`, `SONSTIGES` |
+| `auswahlbegruendung` | text | **Pflicht.** Katalogwert allein genügt nicht |
+| `ausgewaehlt_von`, `ausgewaehlt_am` | uuid, timestamptz | Wer wann entschieden hat |
+
 ### MARKETINGKAMPAGNE
 
 | Feld | Typ | Anmerkung |
@@ -401,7 +429,8 @@ White-Label-Marken für große Händlerketten, Vertriebseinheiten.
 
 | Punkt | Auswirkung | Klärung durch |
 |---|---|---|
-| Produktspezifische Pflichtfelder je Sparte sind unbekannt | `produktdaten` bleibt vorerst schwach spezifiziert | Versicherer / Produktquelle (**A-01**) |
+| Produktspezifische Pflichtfelder je Sparte und je Träger | `produktdaten` bleibt vorerst schwach spezifiziert. Bei E-Mail-Anbindung erhebt man sie aus den Antragsformularen der Versicherer | Innendienst je Träger, Welle 1 |
+| Tarifdaten für eine unverbindliche Richtprämie | Entscheidet über den Zuschnitt von M2 | **A-08** |
 | Provisionsmodell je Organisationsrolle ist unbestimmt | `Vereinbarung` bleibt grob | Geschäftsführung |
 | Schadenmodell ist nicht Bestandteil dieser Fassung | Kein `Schaden`-Entitätsbereich | eigene Architekturphase |
 | Zahlungs- und Mahnwesen ist offen | Keine `Zahlung`-Entität | **A-06** |

@@ -113,6 +113,7 @@ graph TB
 | **Ausgaben** | Lead an M1 mit vollständiger Herkunft · Einwilligungsnachweis an M0 · Bestätigungs-E-Mail über M3 · Ereignis `lead.eingegangen` |
 | **Abgrenzung** | Bewertet Leads nicht — das tut M1. Versendet nicht selbst — das tut M3. |
 | **Fachliche Regel** | Ein Formular ohne erfasste Rechtsgrundlage erzeugt keinen Lead, sondern einen Fehler. Es gibt keinen stillschweigenden Weg in die Datenbank. |
+| **Offen** | **Ohne Online-Tarifierung** (ADR-0010) kann die Website keine verbindliche Prämie zeigen. Ob stattdessen eine unverbindliche Richtprämie erscheint, ist offener Punkt **A-08** — er bestimmt den Zuschnitt dieses Moduls. |
 | **Doppelte Erkennung** | Bekannte Personen werden anhand definierter Merkmale erkannt und **vorgeschlagen**, nie automatisch zusammengeführt. |
 
 ---
@@ -224,6 +225,7 @@ graph TB
 | **Ausgaben** | Aufgaben an M1 · Kommunikationsaufträge an M3 · Dokumentanforderungen an M9 · Statusänderungen an M0 · Eskalationen · Ereignisse `vorgang.gestartet`, `vorgang.eskaliert`, `vorgang.abgeschlossen` |
 | **Abgrenzung** | Besitzt keine Fachdaten, nur den Prozesszustand. |
 | **Verbindliche Regeln** | Jeder Übergang ist **benannt** und hat erlaubte Ausgangszustände, eine berechtigte Rolle, Vorbedingungen, Nebenwirkungen und einen Auditeintrag. Es gibt keinen allgemeinen Weg, einen Zustand zu setzen. Wiederholte Aufrufe im Zielzustand sind folgenlos, damit Netzwerkfehler gefahrlos wiederholbar sind. |
+| **Teilsystem Posteingang** | Abholung des Versicherer-Rücklaufs per IMAP, mehrstufige Zuordnung, Virenprüfung, strukturierte Erfassung. Eine unzuordenbare Mail wird nie verworfen, sondern zur Aufgabe. Siehe [`11_ANBINDUNG_PRODUKTQUELLE.md`](11_ANBINDUNG_PRODUKTQUELLE.md) §5 |
 | **Verhältnis zu Power Automate** | Fachliche Abläufe mit Fristen und Nachweispflicht laufen in M10. Power Automate übernimmt bürointerne Anschlüsse — Freigabe in Teams, Ablage in SharePoint, Kalendereintrag. Die fachliche Wahrheit bleibt in M10. |
 
 ---
@@ -250,6 +252,7 @@ graph TB
 | Organisation (Händler, Club, Partner) | M0 | M4, M5, M6, M1, M11 |
 | Boot | M0 | M1, M4, M7, M8, M11 |
 | Vertrag, Deckung, Prämie | M0 | M1, M7, M10, M11 |
+| Versicherer, Kanal je Träger | M0 | M10, M11 |
 | Einwilligung, Widerspruch | M0 / M3 | M2, M3, M7, M11 |
 | Lead, Aktivität, Score, Aufgabe | M1 | M2, M4, M5, M6, M8, M11 |
 | Marketingkampagne, Newsletter | M3 | M2, M11 |

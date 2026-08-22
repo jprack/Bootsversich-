@@ -124,20 +124,26 @@ Fehlertracking und E-Mail-Versand.
 | **AWS** | `eu-central-1` Frankfurt | Reifste Managed Services | US-Mutterkonzern → zusätzliche Prüfung nötig |
 | **Azure** | Germany West Central | Nähe zu Microsoft 365 / Power Automate | Ebenso US-Mutterkonzern |
 
-**Empfehlung für V1:** Hetzner oder IONOS. Ein europäischer Betreiber ohne
-Drittlandbezug vereinfacht die Datenschutzprüfung erheblich und passt zur
-Lastannahme von V1. Die Entscheidung ist offener Punkt **A-03**.
+**Entschieden: Hetzner** (ADR-0011). Ein deutscher Betreiber ohne Drittlandbezug
+lässt die Drittlandbewertung für Anwendung, Datenbank, Objektspeicher und
+Sicherungen vollständig entfallen — der größte einzelne Zeitgewinn in der
+Datenschutzprüfung.
 
-**Falls Microsoft 365 und Power Automate zentral werden**, spricht Vieles für
-Azure Germany West Central — dann jedoch mit dokumentierter Prüfung nach
-Kapitel 8.
+**Was die Entscheidung kostet:** Hetzner bietet kein Managed PostgreSQL und keine
+unveränderlichen Sicherungen. Die Datenbank läuft im Eigenbetrieb auf dedizierten
+vCPU, und eine dritte Sicherungskopie liegt außerhalb des Kontos. Der V2-Pfad über
+Managed Kubernetes ist neu zu bewerten; V1 bleibt unberührt.
+
+Serveraufbau, Netzplan, Sicherungsstrategie, E-Mail-Zustellbarkeit und die
+Einrichtungsreihenfolge stehen in
+[`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md).
 
 ### 4.2 Ausbaustufen des Betriebs
 
 | Stufe | Betriebsform | Begründung |
 |---|---|---|
-| **V1** | Docker Compose auf zwei bis drei Servern, Managed PostgreSQL | Kleines Team, überschaubare Last. Kubernetes wäre Selbstzweck. |
-| **V2** | Managed Kubernetes, getrennte Umgebungen, Autoskalierung der Worker | Mehrere Länder, Portale, Kampagnenlast |
+| **V1** | Docker Compose auf drei Servern bei Hetzner, PostgreSQL im Eigenbetrieb auf dedizierten vCPU | Kleines Team, überschaubare Last. Kubernetes wäre Selbstzweck. |
+| **V2** | Orchestrierung, getrennte Umgebungen, Autoskalierung der Worker. **Bei Hetzner kein Managed Kubernetes** — `k3s` im Eigenbetrieb oder Anbieterwechsel für diese Ebene | Mehrere Länder, Portale, Kampagnenlast |
 | **V3** | Mehrere Zonen, Read Replicas, getrenntes Data Warehouse | Verfügbarkeitszusagen gegenüber Partnern |
 
 ### 4.3 Umgebungen
@@ -173,11 +179,11 @@ kopiert.
 
 | Dienst | Zweck | Kritikalität | Ersetzbarkeit | Offener Punkt |
 |---|---|---|---|---|
-| **Brevo** | Newsletter, Transaktions-E-Mail, Marketingautomation | B | Hinter Adapter, ersetzbar durch Mailjet, Sendinblue-Alternativen, eigenes SMTP | Auftragsverarbeitung, EU-Speicherung (**A-07**) |
+| **Brevo** | Newsletter und Marketing. **Nicht** für Vorgangsmails an Versicherer — siehe A-09 | B | Hinter Adapter, ersetzbar durch Mailjet, Sendinblue-Alternativen, eigenes SMTP | Auftragsverarbeitung, EU-Speicherung (**A-07**) |
 | **Microsoft 365 / Power Automate** | Bürointerne Abläufe, Freigaben, Teams-Benachrichtigungen | C | Ersetzbar durch eigene Workflow-Engine | Datenstandort, Umfang der übertragenen Daten (**A-07**) |
 | **Signaturdienst** | Elektronische Unterschrift | A (ab V2) | Hinter Adapter | Anbieter und Signaturstufe (**A-04**) |
 | **Zahlungsdienst** | Beitragseinzug | A (ab V2) | Hinter Adapter | Modell: eigenes Inkasso oder Versichererinkasso (**A-06**) |
-| **Versicherer / Produktquelle** | Tarifierung, Antrag, Bestand | A | Nicht ersetzbar, aber mehrere parallel möglich | Anbindungsart (**A-01**) |
+| **Versicherer / Produktquelle** | Angebot, Antrag, Bestand | A | Mehrere Träger parallel | **geklärt:** E-Mail, ADR-0010 |
 | **LinkedIn** | Reichweite, Lead Gen Forms, Unternehmensseite | D | ersetzbar | Einwilligungsgrundlage |
 | **Google** | Analytics 4, Ads, Business Profile, Maps | C | teils ersetzbar (Matomo, OpenStreetMap) | Drittlandübermittlung, Einwilligung |
 | **Anthropic Claude / OpenAI** | KI-Assistenz, Textentwurf, Extraktion | D | Hinter Adapter, gegeneinander austauschbar | Auftragsverarbeitung, Datenminimierung (**A-07**) |

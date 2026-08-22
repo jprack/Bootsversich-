@@ -18,3 +18,5 @@ Vermerk `Ersetzt durch ADR-xxxx`.
 | [0007](0007-messung-und-einwilligung.md) | Reichweitenmessung nur mit Einwilligung | vorgeschlagen |
 | [0008](0008-ki-ohne-schreibrechte.md) | KI ohne Schreibrechte auf Fachdaten | vorgeschlagen |
 | [0009](0009-verhaeltnis-zu-vorarbeiten.md) | Verhältnis zu vorhandenen Arbeiten im Repository | angenommen |
+| [0010](0010-email-als-produktkanal.md) | E-Mail als Kanal zur Produktquelle | angenommen — schließt A-01 |
+| [0011](0011-hetzner-als-hosting.md) | Hetzner als Hosting-Anbieter | angenommen — schließt A-03 |

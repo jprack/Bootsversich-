@@ -7,10 +7,11 @@
 | Phase | `01_ARCHITECTURE` |
 | Zweck | Vollständige Zielarchitektur der europäischen Boat-Insurance- und Boat-Marketing-Plattform |
 | Status | Architekturentwurf zur Freigabe |
-| Fassung | 1.0 |
+| Fassung | 1.1 |
 | Datum | 2026-08-21 |
+| Geschlossen seit Fassung 1.0 | A-01 (E-Mail-Kanal) · A-02 (Mehrfachagent, AT+DE) · A-03 (Hetzner) |
 | Plattformbasis | WordPress (Experience- und Portalschicht) + eigener Domänenkern |
-| Geltungsbereich | Deutschland, Österreich, perspektivisch EU/EWR |
+| Geltungsbereich | Österreich und Deutschland ab Welle 1, perspektivisch EU/EWR |
 | Sprache Fachmodell | Deutsch |
 
 > **In dieser Phase wird nicht programmiert.** Es entsteht ausschließlich die
@@ -34,11 +35,14 @@
 | [`08_SICHERHEITSARCHITEKTUR.md`](08_SICHERHEITSARCHITEKTUR.md) | DSGVO, EU-Hosting, Berechtigungen, Audit, Backup, WordPress-Härtung | Datenschutz, Betrieb, Revision |
 | [`09_SKALIERUNG.md`](09_SKALIERUNG.md) | Ausbaustufen V1, V2, V3 mit Lastannahmen und Engpässen | CTO, Betrieb |
 | [`10_ROADMAP.md`](10_ROADMAP.md) | Reihenfolge, Abhängigkeiten, parallelisierbare Stränge, Meilensteine | Geschäftsführung, Projektsteuerung |
+| [`11_ANBINDUNG_PRODUKTQUELLE.md`](11_ANBINDUNG_PRODUKTQUELLE.md) | E-Mail als Kanal zu den Versicherern, Fächerung an mehrere Träger, Vergleich und Auswahl | Produkt, Integration |
+| [`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md) | Serveraufbau, Netz, Datenbank im Eigenbetrieb, Sicherungen, E-Mail-Zustellbarkeit, Einrichtungsreihenfolge | Betrieb |
 | [`adr/`](adr/) | Architekturentscheidungen mit Kontext, Alternativen und Konsequenzen | Architektur |
 
-**Empfohlene Lesereihenfolge:** 01 → 03 → 04 → 07 → 02 → 05 → 06 → 08 → 09 → 10.
+**Empfohlene Lesereihenfolge:** 01 → 03 → 04 → 07 → **11** → 02 → **12** → 05 → 06 → 08 → 09 → 10.
 
-Für die Geschäftsführung genügen 01, 03, 09 und 10.
+Für die Geschäftsführung genügen 01, 03, **11**, 09 und 10.
+Wer das Hosting einrichtet, beginnt bei 12.
 
 ---
 
@@ -84,13 +88,16 @@ Ein Architekturentwurf, der keine offenen Punkte nennt, verbirgt sie nur.
 
 | ID | Offener Punkt | Blockiert | Zu klären durch |
 |---|---|---|---|
-| A-01 | Produktquelle und Risikoträger: Welche Versicherer, welche Produkte, welche technische Anbindung (API, BiPRO, GDV, Datei, Portal)? | Fundamentmodul M0 (Vertragskern), Tarifierung | Produktverantwortung, Versicherer |
-| A-02 | Vermittlerstatus und Zulassung je Land (AT: GewO, DE: §34d GewO) | Öffentlicher Vertrieb, Erstinformation | Rechtsberatung |
-| A-03 | Hostingpartner und konkrete Region | Betriebskonzept, AVV, DSFA | Geschäftsführung |
+| ~~A-01~~ | ~~Produktquelle und Risikoträger~~ | — | **Geschlossen:** E-Mail-Kanal, mehrere Versicherer. Siehe [`11_ANBINDUNG_PRODUKTQUELLE.md`](11_ANBINDUNG_PRODUKTQUELLE.md) und ADR-0010 |
+| ~~A-02~~ | ~~Vermittlerstatus und Zulassung je Land~~ | — | **Geschlossen:** Mehrfachagent, zugelassen in AT und DE |
+| ~~A-03~~ | ~~Hostingpartner und Region~~ | — | **Geschlossen:** Hetzner, deutsche Standorte. Siehe [`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md) und ADR-0011 |
+| **A-08** | **Zeigt die Website eine unverbindliche Richtprämie — und woher kämen die Tarifdaten?** Ohne Online-Tarifierung ist das die entscheidende Produktfrage | Zuschnitt von M2, Umwandlungsquote | Produktverantwortung, Welle 1 |
+| **A-09** | **Versandweg für Vorgangsmails**: Transaktionsdienst mit AVV und EU-Standort oder eigener Relay | Welle 2, Zustellbarkeit der Angebotsanfragen | Betrieb + Datenschutz |
 | A-04 | Signaturanbieter und erreichbare Signaturstufe | Antragsstrecke | Produktverantwortung, Rechtsberatung |
 | A-05 | Notwendigkeit einer Datenschutz-Folgenabschätzung für Scoring und Profiling | Produktivgang von M1 und M8 | Datenschutzbeauftragte Person |
 | A-06 | Zahlungsabwicklung: eigene Inkasso-Strecke oder Versichererinkasso | Vertragskern (M0) ab V2 | Geschäftsführung |
 | A-07 | Auftragsverarbeitung mit Brevo, Microsoft, KI-Anbietern | Produktivgang von M3, M8 | Datenschutzbeauftragte Person |
+| A-10 | Umfang der Beratungs- und Dokumentationspflichten für Mehrfachagenten in AT und DE | Inhalt der Erstinformation, Pflichtfelder der Auswahlbegründung | Rechtsberatung |
 
 Diese Punkte sind in [`10_ROADMAP.md`](10_ROADMAP.md) terminiert und in
 [`08_SICHERHEITSARCHITEKTUR.md`](08_SICHERHEITSARCHITEKTUR.md) bewertet.

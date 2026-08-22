@@ -179,7 +179,7 @@ sequenceDiagram
     KU->>P: Daten vervollständigen
     P->>WF: Vorgang: DATENERFASSUNG → BEREIT_FUER_ANGEBOT
     WF->>VS: Tarifierungsanfrage (Idempotenzschlüssel)
-    Note over VS: Mock · Manuell · Real (deaktiviert)
+    Note over VS: E-Mail je Träger · Fächerung<br/>an mehrere Versicherer (ADR-0010)
     VS-->>WF: Angebot (Prämie, Deckungen, Gültigkeit, Dokument)
     WF->>PR: Angebot prüfen
     PR->>PR: Name, Adresse, Produktcode, Beginn
@@ -192,7 +192,8 @@ sequenceDiagram
         WF->>AG: Aufgabe mit Regelverweis und Begründung
         AG->>WF: Entscheidung je Befund + Begründung
     end
-    WF->>KU: Angebot im Portal bereitgestellt
+    WF->>AG: Vergleich mehrerer Angebote<br/>Auswahl + Pflichtbegründung
+    WF->>KU: Ausgewähltes Angebot im Portal bereitgestellt
     KU->>SI: Signatur starten
     SI-->>WF: Signaturereignis (signiert, geprüft, dedupliziert)
     WF->>WF: Unterlagen auf Vollständigkeit prüfen
@@ -201,6 +202,21 @@ sequenceDiagram
     WF->>M0: Vertrag anlegen, Status AKTIV
     M0->>M0: Ereignis vertrag.aktiviert
 ```
+
+### Was sich durch die E-Mail-Anbindung ändert
+
+Der Ablauf oben zeigt **einen** Träger. Als Mehrfachagent fächert sich der
+Schritt „Tarifierungsanfrage" in mehrere ausgehende Mails auf, und es kommen
+mehrere Angebote zurück. Dazwischen liegt ein Vergleichs- und Auswahlschritt mit
+Pflichtbegründung. Die vollständige Darstellung steht in
+[`11_ANBINDUNG_PRODUKTQUELLE.md`](11_ANBINDUNG_PRODUKTQUELLE.md) §3.
+
+Zwei Folgen für diesen Fluss:
+
+| Folge | Wirkung |
+|---|---|
+| Die Antwort kommt in Stunden bis Tagen, nicht in Sekunden | Der Kunde verlässt die Sitzung. Die zweite Sitzung ist der kritische Punkt — dort verliert man Interessenten an schnellere Wettbewerber |
+| Es gibt keine Fehlermeldung | Ein Träger, der nicht antwortet, sieht aus wie ein Träger, der noch rechnet. Nur eine Fristüberwachung unterscheidet beides |
 
 ### Verbindliche Regeln
 
@@ -362,7 +378,9 @@ Versprechen an alle, die ihn auswerten.
 |---|---|---|
 | Kern nicht erreichbar beim Formularversand | Zeitüberschreitung | Zwischenspeicher in WordPress, Bestätigung an den Absender, Nachlauf, Alarm |
 | Brevo antwortet nicht | Fehlerquote am Konnektor | Warteschlange staut, Formulare laufen weiter, Alarm nach 30 Minuten |
-| Versicherer antwortet nicht auf Tarifierung | Zeitüberschreitung | Vorgang bleibt in `ANGEBOT_ANGEFORDERT`, Aufgabe für den Innendienst, manueller Weg möglich |
+| Versicherer antwortet nicht auf Tarifierung | **Fristüberwachung je Träger** — es gibt keine Fehlermeldung | Nach der zugesagten Antwortzeit: Aufgabe für den Innendienst mit Nachfassvorschlag. Bei zwei von drei Trägern ohne Antwort: Angebot aus den vorliegenden auswählen, nicht warten |
+| Angebotsmail landet im Spam des Versicherers | Ausbleibende Antwort bei mehreren Vorgängen desselben Trägers | Zustellrate überwachen, SPF/DKIM/DMARC prüfen, Rückkanal telefonisch |
+| Rücklaufmail nicht zuordenbar | Keine Vorgangsnummer im Betreff, kein `In-Reply-To` | Aufgabe für den Innendienst. **Nie stillschweigend verwerfen** — es wartet ein Kunde darauf |
 | Doppeltes Signaturereignis | Eindeutiger Index auf Ereigniskennung | Protokolliert, nicht angewendet |
 | Signatur auf veralteter Fassung | Prüfregel vor der Einreichung | Ablehnung, neue Signatur mit aktueller Fassung |
 | Abgelaufenes Angebot wird bestätigt | Gültigkeitsprüfung im Übergang | Ablehnung mit Hinweis, Neuanfrage angeboten |

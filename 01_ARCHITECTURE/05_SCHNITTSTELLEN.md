@@ -105,13 +105,34 @@ werden deaktiviert. Beides gibt sonst ohne Not Auskunft über die Organisation.
 
 | Feld | Wert |
 |---|---|
-| **Status** | `OFFEN` (**A-01**) — der wichtigste ungeklärte Punkt der Architektur |
-| **Denkbare Verfahren** | REST-API des Versicherers · BiPRO-Normen (DE) · GDV-Datensatz · strukturierter Dateiaustausch (SFTP) · Maklerportal mit manuellem Weg |
-| **Hinaus** | Tarifierungsanfrage, Antrag, Änderung, Kündigung, Dokumente |
-| **Herein** | Prämie, Angebot, Policierung, Bestandsänderung, Dokumente, Statusmeldung |
+| **Status** | `VERIFIZIERT` — dokumentierter E-Mail-Prozess (A-01 geschlossen, ADR-0010) |
+| **Kanal** | E-Mail, je Versicherer konfiguriert |
+| **Träger** | Mehrere. Vermittlerstatus: Mehrfachagent |
+| **Hinaus** | Angebotsanfrage als PDF und CSV, Antragsunterlagen, Änderungen, Kündigungen |
+| **Herein** | Angebot, Policierung, Bestandsänderung, Dokumente, Rückfragen |
+| **Korrelation** | Eigene Vorgangsnummer in eckigen Klammern am Betreffanfang; zusätzlich `Message-ID` und `In-Reply-To` |
+| **Idempotenz** | Schlüssel aus Vorgangsnummer, Versicherer und laufender Nummer |
 | **Kritikalität** | A |
-| **Vorgehen bis zur Klärung** | Adapter mit drei Ausprägungen: `Mock` für Entwicklung und Tests, `Manuell` für den dokumentierten Papier- und Portalweg, `Real` als deaktiviertes Gerüst. Der manuelle Weg ist vollwertig und auditiert, kein Notbehelf |
-| **Untersagt** | Automatisierung eines Versichererportals durch Skripte oder Browser-Roboter ohne schriftliche Erlaubnis — `NICHT ZULÄSSIG` |
+| **Ausfallverhalten** | Bei E-Mail gibt es keine Fehlermeldung. **Schweigen ist der Normalfall des Scheiterns** — deshalb erzeugt eine überschrittene Antwortfrist zwingend eine Aufgabe |
+| **Untersagt** | Automatisierung eines Versichererportals ohne schriftliche Erlaubnis — `NICHT ZULÄSSIG` |
+
+Vollständige Ausarbeitung: [`11_ANBINDUNG_PRODUKTQUELLE.md`](11_ANBINDUNG_PRODUKTQUELLE.md).
+
+**Die wichtigste Folge:** Es gibt keine Online-Tarifierung. Die Website kann keine
+verbindliche Prämie anzeigen. Die Leitkennzahl verschiebt sich von der
+Antwortzeit der Schnittstelle zur **Antwortzeit bis zum Angebot** — eine
+organisatorische Größe, keine technische.
+
+### 3.3a Posteingang (Rücklauf der Versicherer)
+
+| Feld | Wert |
+|---|---|
+| **Status** | `VERIFIZIERT` (eigen) |
+| **Protokoll** | IMAP, Abholung durch den Worker im Minutentakt |
+| **Zuordnung** | 1. Vorgangsnummer im Betreff · 2. `In-Reply-To` · 3. Absender und offene Übermittlung (**Vorschlag**, nie automatisch) · 4. Aufgabe für den Innendienst |
+| **Anlagen** | Virenprüfung, SHA-256, Ablage als Dokumentversion. Bis zum Prüfergebnis kein Zugriff |
+| **Kritikalität** | A |
+| **Verbindlich** | Eine unzuordenbare Mail wird nie stillschweigend verworfen. Die Original-Mail wird ins Dokumentenmanagement überführt — ein Postfach ist kein Archiv |
 
 ### 3.4 Signaturdienst
 
@@ -225,7 +246,8 @@ betrifft genau eine Tabelle.
 | 1 | WordPress ↔ Domänenkern | beide | REST, mTLS | A | `VERIFIZIERT` (eigen) | Wartungsseite |
 | 2 | Identitätsanbieter | beide | OIDC | A | `VERIFIZIERT` (eigen) | keiner — Anmeldung entfällt |
 | 3 | Objektspeicher | beide | S3 | A | `VERIFIZIERT` | kein Dokumentzugriff |
-| 4 | Versicherer / Produktquelle | beide | offen | A | **`OFFEN`** | manueller Prozess |
+| 4 | Versicherer / Produktquelle | beide | E-Mail (SMTP) | A | `VERIFIZIERT` | Anruf, Fristaufgabe |
+| 4a | Posteingang Rücklauf | herein | IMAP | A | `VERIFIZIERT` | manuelle Sichtung des Postfachs |
 | 5 | Signaturdienst | beide | REST + Webhook | A (V2) | **`OFFEN`** | manuelle Signatur |
 | 6 | Brevo | beide | REST + Webhook | B | `ANNAHME` | Warteschlange, Nachlauf |
 | 7 | Zahlungsdienst | beide | REST + Webhook | A (V2) | **`OFFEN`** | Versichererinkasso |

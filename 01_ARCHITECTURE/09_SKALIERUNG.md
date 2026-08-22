@@ -26,7 +26,7 @@ Grundlage der Auslegung. Sie sind zu prüfen, nicht zu glauben.
 
 | Kennzahl | V1 (Jahr 1) | V2 (Jahr 2–3) | V3 (Jahr 4+) |
 |---|---|---|---|
-| Märkte | AT | AT, DE | AT, DE, weitere EU |
+| Märkte | **AT und DE** | AT, DE | AT, DE, weitere EU |
 | Mandanten | 1 | 2–3 | 5–15 (inkl. White Label) |
 | Besuche je Monat | 20.000 | 150.000 | 800.000 |
 | Leads je Monat | 300 | 2.500 | 12.000 |
@@ -196,6 +196,7 @@ Gemessen am 95. Perzentil unter Saisonlast.
 
 | Vorgang | Ziel | Bemerkung |
 |---|---|---|
+| **Antwortzeit bis zum Angebot** | **< 1 Werktag** | **Die Leitkennzahl.** Sie ist organisatorisch, nicht technisch — und sie entscheidet über die Umwandlung, seit die Anbindung über E-Mail läuft (ADR-0010) |
 | Öffentliche Seite, erster sichtbarer Inhalt | < 1,5 s | aus dem Cache |
 | Größter sichtbarer Inhalt (Mobil, 4G) | < 2,0 s | Bootsbilder sind der kritische Anteil |
 | Formularabsendung mit Bestätigung | < 800 ms | ohne nachgelagerte Schritte |
