@@ -10,7 +10,7 @@ Nicht in den Einzeltabellen wiederholt.
 |---|---|---|---|
 | `id` | uuid (v7) | ja | Technischer Schlüssel. Zeitlich sortierbar, nicht erratbar |
 | `mandant_id` | uuid | ja | `AT` oder `DE`. Durchgesetzt per Row Level Security, nicht per Filter |
-| `quelle` | enum | ja | Woher der Datensatz stammt: `FORMULAR`, `MANUELL`, `HAENDLER`, `CLUB`, `PARTNER`, `PORTAL`, `IMPORT`, `VERSICHERER`, `SYSTEM`. Grundlage für Auskunft und Attribution |
+| `quelle` | enum | ja | Woher der Datensatz stammt: `FORMULAR`, `MANUELL`, `HAENDLER`, `CLUB`, `PARTNER`, `PORTAL`, `IMPORT`, `POLIZZENIMPORT`, `VERSICHERER`, `SYSTEM`. Grundlage für Auskunft und Attribution |
 | `erstellt_am` / `geaendert_am` | timestamptz | ja | UTC. Anzeige in `Europe/Vienna` bzw. `Europe/Berlin` |
 | `erstellt_von` / `geaendert_von` | uuid | nein | Benutzer. Leer bedeutet: durch das System |
 
@@ -396,6 +396,7 @@ Der Kopfsatz ist stabil. Alles Veränderliche liegt in `VERTRAGSVERSION`.
 | `aktuelle_version_id` | uuid | ja | Verweis auf die geltende Version |
 | `vorgaenger_vertrag_id` | uuid | nein | Bei Umdeckung oder Trägerwechsel |
 | `abgeschlossen_am` | timestamptz | nein | |
+| `historie_unvollstaendig` | boolean | ja | **Standard `false`.** `true` bei Polizzenimport ohne Vorgeschichte — der Vertrag beginnt mit Version 1, obwohl es frühere gab ([Kapitel 14](14_POLIZZENIMPORT.md) §8.3) |
 
 ### 11.1 VERTRAGSVERSION — unveränderlich
 
@@ -587,3 +588,21 @@ Datensatz anonymisiert wird ([ADR-0006](../01_ARCHITECTURE/adr/0006-zwei-datenba
 
 Rechte: `INSERT` und `SELECT`. `UPDATE` und `DELETE` sind der Anwendungsrolle
 entzogen und zusätzlich per Trigger blockiert.
+
+---
+
+## 18. Importentitäten — vier Tabellen für den Polizzenimport
+
+Der Bestand entsteht aus PDF-Polizzen. Die vollständigen Feldtabellen stehen in
+[`14_POLIZZENIMPORT.md`](14_POLIZZENIMPORT.md) §5, weil sie nur dort zu verstehen
+sind. Hier die Einordnung:
+
+| Entität | Zweck | Warum eigenständig |
+|---|---|---|
+| `IMPORTSTAPEL` | Bündel von Belegen mit gemeinsamem Status | Erst ein **abgeschlossener** Stapel gibt die Verträge für Automationen frei |
+| `IMPORTBELEG` | Ein PDF auf seinem Weg durch fünf Stufen | Trägt Prüfsumme, Klassifikation, Ablehnungsgrund — ein abgelehnter Beleg verschwindet nicht |
+| `EXTRAKTIONSFELD` | Ein extrahierter Wert mit **Dokument, Seite, Fundstelle, Konfidenz** | Die Tabelle, die aus einem Import eine Beweislage macht |
+| `POLIZZENPROFIL` | Extraktionswissen je Versicherer, als Daten | Ein neuer Versicherer ist kein Entwicklungsauftrag ([ADR-0007](adr/0007-polizze-als-beleg.md)) |
+
+Damit umfasst das Kern-CRM **28 Entitäten**.
+

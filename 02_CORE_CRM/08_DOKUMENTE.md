@@ -68,6 +68,7 @@ Dokument als unterschrieben behandelt wird.
 | Typ | Herkunft | Zugriffsklasse | Aufbewahrung |
 |---|---|---|---|
 | `POLICE` | Versicherer | kundensichtbar | `VERTRAG` |
+| `NACHTRAG` | Versicherer | kundensichtbar | `VERTRAG` |
 | `ANTRAG` | System, signiert | kundensichtbar | `VERTRAG` |
 | `ANGEBOT` | Versicherer | kundensichtbar | `VERTRAG` |
 | `BEDINGUNGSWERK` | Versicherer | kundensichtbar | `VERTRAG` |
@@ -79,6 +80,11 @@ Dokument als unterschrieben behandelt wird.
 | `AUSWEIS` | Kunde | **eingeschränkt** | `VERTRAG`, kürzeste zulässige Frist |
 | `KUENDIGUNG` | Kunde, Versicherer | kundensichtbar | `VERTRAG` |
 | `KORRESPONDENZ` | beide | intern | `VERTRAG` |
+
+**Importierte Polizzen** entstehen als `POLICE` oder `NACHTRAG` mit
+`herkunft = VERSICHERER`. Die Ablage geschieht **vor** jeder Auswertung, mit
+Prüfsumme und Virenprüfung wie bei jedem anderen Dokument — der Weg dorthin
+steht in [`14_POLIZZENIMPORT.md`](14_POLIZZENIMPORT.md).
 
 `eingeschränkt` bedeutet: nur Vertrieb und Innendienst, jeder Abruf gesondert
 protokolliert, kein Erscheinen in Listen. Ein Ausweisscan ist das sensibelste

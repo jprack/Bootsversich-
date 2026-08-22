@@ -12,3 +12,4 @@ modulspezifische Festlegungen. Bei Widerspruch gewinnt die Gesamtarchitektur.
 | [0004](0004-automationen-als-daten.md) | Automatisierungen sind Daten, keine Programmierung | vorgeschlagen |
 | [0005](0005-wordpress-als-werkbank.md) | WordPress-Adminbereich als CRM-Werkbank | vorgeschlagen |
 | [0006](0006-kundennummer-fortlaufend.md) | Kundennummer: fortlaufend ab 1, ohne Bedeutung | **entschieden** |
+| [0007](0007-polizze-als-beleg.md) | Die Polizze ist der Beleg, nicht die Datenquelle | **entschieden** |

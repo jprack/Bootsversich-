@@ -150,6 +150,8 @@ zuerst, was andere blockiert.
 | Tarife auf die Import-Vorlage zuordnen | sofort | Braucht keinen Entwickler |
 | Datenschutzunterlagen | sofort | Läuft parallel, verhindert später Stillstand |
 | Startpaket des Regelkatalogs festlegen | sofort | Zwölf Regeln statt 53 — [Kapitel 13](13_STARTKONFIGURATION.md) §4.6 |
+| **Polizzen sammeln und ablegen** | **sofort** | Stufe 0 des Imports braucht weder Extraktion noch Datenmodell — [Kapitel 14](14_POLIZZENIMPORT.md) |
+| Polizzenprofil je Versicherer ausarbeiten | sofort | Braucht keinen Entwickler, nur eine Polizze und Aufmerksamkeit |
 
 **Schnitt 1 ist der Engpass der gesamten Roadmap.** Stehen die Verträge, können
 sechs Stränge parallel arbeiten. Entstehen sie erst mit dem Code, kollabieren
@@ -166,6 +168,7 @@ sie auf einen.
 | **CR-03** | Automatische Dublettenzusammenführung wird „aus Bequemlichkeit" eingebaut | Praktisch nicht rückgängig zu machen | Modell und API kennen nur Vorschläge |
 | **CR-04** | Die Kundenakte lädt langsam | Der Innendienst weicht auf Excel aus, und das Modul ist gescheitert | Gebündelter `/dossier`-Endpunkt, Reiter werden nachgeladen, Leistungsziele als Abnahmekriterium |
 | ~~**CR-05**~~ | ~~Bestandsübernahme unterschätzt~~ | **Entfällt** — Start auf leerer Datenbank (C-03 entschieden) | — |
+| **CR-11** | Der Polizzenimport wird nebenbei geführt | Stapel bleiben halb offen, Automationen bleiben für diesen Bestand gesperrt, der Nutzen tritt nie ein | Feste Zeitfenster, Stapel höchstens 40 Belege, Fortschritt sichtbar. **Nicht im Aufgabensystem** ([Kapitel 14](14_POLIZZENIMPORT.md) §10.4) |
 | **CR-10** | Alleinfreigabe wird bei zwei Personen zur Gewohnheit statt zur Ausnahme | Die einzige wirtschaftlich bindende Kontrolle wird faktisch wirkungslos | Pflichtbegründung, Auditeintrag, monatlicher Bericht ([Kapitel 13](13_STARTKONFIGURATION.md) §4.5) |
 | **CR-06** | Regelpflege hat keine verantwortliche Person | Regeln veralten still, niemand merkt es | Benannte Person; monatlicher Bericht Regelwirkung |
 | **CR-07** | Die API entsteht erst mit der Umsetzung | Parallelisierung entfällt, Termin vervielfacht sich | Schnitt 1 ist unverhandelbar |

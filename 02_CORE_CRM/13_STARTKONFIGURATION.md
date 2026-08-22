@@ -122,7 +122,7 @@ leer.
 
 | Entfällt | Wirkung |
 |---|---|
-| Migrationsstrang in Welle 1 | Ein ganzer Arbeitsstrang, üblicherweise der unterschätzte |
+| Migrationsstrang aus einem Vorsystem | Keine Abbildung fremder Datenmodelle, keine Altsystem-Abschaltung |
 | Abbildungstabellen Alt → Neu | Keine Doppelidentitäten |
 | Prüflauf und Doppelpflegephase | Kein Zeitraum mit zwei führenden Systemen |
 | **Risiko CR-05** | Gegenstandslos |
@@ -131,11 +131,14 @@ leer.
 
 Ein leerer Start ist kein reiner Gewinn. Drei Dinge ändern sich:
 
-**1. Bestehende Verträge werden anlassbezogen erfasst, nicht migriert.**
-Falls Verträge auf Papier oder in Tabellen geführt werden, entstehen sie im CRM
-beim nächsten Anlass — Kundenkontakt, Verlängerung, Schadenmeldung — mit
-`quelle = NACHERFASSUNG`. Kein Stichtag, keine Sammelaktion, kein Projekt. Der
-Bestand wächst aus der laufenden Arbeit.
+**1. Der Bestand kommt aus PDF-Polizzen.**
+*Nachtrag vom 2026-08-22:* Es wird kein Vorsystem migriert — aber es gibt einen
+geordneten Bestandsweg. Die vorhandenen **PDF-Polizzen** werden stapelweise
+eingelesen: abgelegt, extrahiert, geprüft, freigegeben. Das ist keine Migration,
+sondern Beleglese, und sie hat eigene Regeln — vollständig in
+[`14_POLIZZENIMPORT.md`](14_POLIZZENIMPORT.md), Grundsatz in
+[ADR-0007](adr/0007-polizze-als-beleg.md). Reihenfolge nach Fristennähe, nicht
+alphabetisch. `quelle = POLIZZENIMPORT`.
 
 **2. Kennzahlen haben keine Vergangenheit.**
 Bestandsentwicklung, Stornoquote und Kohortenauswertungen aus
