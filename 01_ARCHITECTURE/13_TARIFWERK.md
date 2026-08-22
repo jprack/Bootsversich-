@@ -128,6 +128,12 @@ Tarifposition ein Feld `berechnungsart`.
           └───────────────────────┘
 ```
 
+> **Nachtrag (Modul 02_CORE_CRM, ADR-0003):** Der Versicherer wird nicht als
+> eigenständige Entität geführt, sondern als **Organisation mit der Rolle
+> `VERSICHERER`** — dasselbe Muster wie Händler, Club und Partner. Die Felder
+> bleiben unverändert, sie liegen im Rollenprofil. `versicherer_id` verweist
+> damit auf eine Organisation.
+
 ### Entität TARIFWERK
 
 | Feld | Typ | Anmerkung |

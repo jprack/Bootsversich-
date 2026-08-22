@@ -82,6 +82,7 @@ steht in [`adr/0001-wordpress-als-experience-layer.md`](adr/0001-wordpress-als-e
 | Vorhandenes | Verhältnis zu dieser Architektur |
 |---|---|
 | [`01_CRM_ENGINE/`](../01_CRM_ENGINE/README.md) | Wird zum **CRM-Modul dieser Plattform**. Die dort spezifizierte und als PostgreSQL-Prototyp lauffähige Engine (Lead Score, Customer Value Score, Kündigungsrisiko, Regelkatalog A-01…A-49, Lastschutz) ist der Kern von Modul M1. Diese Architektur ändert daran nichts, sie ordnet es ein. |
+| [`02_CORE_CRM/`](../02_CORE_CRM/README.md) | **Füllt M0 und M1 fachlich aus.** Datenmodell, Beziehungen, Rollen, Aufgaben, Automationen, API und WordPress-Umsetzung des Kern-CRM. Weicht an keiner Stelle von dieser Architektur ab; ADR-0003 des Moduls präzisiert den Versicherer als Organisationsrolle |
 | `apps/`, `packages/`, `docs/` | Rückstand eines abgelösten Auftrags („eigenes Versicherungs-CRM ohne WordPress"). Bleibt als Referenz für Datenmodell und Statusmaschine erhalten, ist aber **nicht** Bestandteil dieser Architektur. Siehe [`adr/0009-verhaeltnis-zu-vorarbeiten.md`](adr/0009-verhaeltnis-zu-vorarbeiten.md). |
 
 ---
