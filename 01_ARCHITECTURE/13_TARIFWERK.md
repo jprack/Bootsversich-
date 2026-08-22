@@ -3,6 +3,7 @@
 | Feld | Wert |
 |---|---|
 | Betrifft | Offener Punkt **A-08**, zweite Hälfte geklärt |
+| Fassung | 1.1 — überarbeitet nach Sichtung der realen Tarife, siehe [`14_TARIFANALYSE.md`](14_TARIFANALYSE.md) |
 | Datenquelle | Vorhandene Tarife als **PDF und Excel** |
 | Zweck | Unverbindliche Richtprämie auf der Website, ohne Online-Tarifierung beim Versicherer |
 | Grundsatz | Excel ist die **Quelle**, nicht das System |
@@ -81,6 +82,21 @@ danach ist der Weg für alle gleich.
 
 ---
 
+## 3a. Drei Tarifarten
+
+Die Sichtung der realen Quellen (Kapitel 14) hat gezeigt: Es gibt nicht eine
+Bauart, sondern drei. Das Modell muss sie unterscheiden können.
+
+| Art | Rechenweg | Vorkommen |
+|---|---|---|
+| **Satztarif** | Satz × Versicherungssumme | Kasko — sowohl NAUTIMA als auch der eigene Entwurf 2026 |
+| **Stufentarif** | Merkmalsband → Betrag | Haftpflicht (Motorleistung, Segelfläche), Insassenunfall |
+| **Festpreisliste** | Produktvariante → Betrag | Zusatzprodukte nach Bootslänge |
+
+Ohne die Unterscheidung ist ein Wert von `0,0143` nicht von `39,32 €` zu
+trennen — und der Unterschied beträgt den Faktor 70.000. Deshalb trägt jede
+Tarifposition ein Feld `berechnungsart`.
+
 ## 4. Datenmodell
 
 ```
@@ -131,16 +147,33 @@ danach ist der Weg für alle gleich.
 |---|---|---|
 | `merkmal` | text | `selbstbehalt`, `baujahr`, `schadenfreiheit`, `nutzungsart`, `motorleistung`, `revier` … |
 | `wert_von`, `wert_bis` | text/numeric | Bereich oder Einzelwert |
-| `operation` | enum | `MULTIPLIKATIV`, `ADDITIV` |
-| `faktor` | numeric(8,4) | |
-| `reihenfolge` | int | **Entscheidend:** Die Reihenfolge der Anwendung verändert das Ergebnis |
+| `art` | enum | `ZUSCHLAG`, `NACHLASS`, `SFR` |
+| `rechenart` | enum | `PROZENT`, `BETRAG` |
+| `faktor` | numeric(8,4) | Nachlässe negativ |
+| `voraussetzung_code` | text | **Ein Faktor kann einen anderen bedingen.** NAUTIMA: „Unterschlagungsrisiko — nur versicherbar bei Charterrisiken ohne Skipper" |
+| `reihenfolge` | int | Greift nur bei sequenzieller Verknüpfung, siehe unten |
 
-### Warum die Reihenfolge ein Feld ist
+### Die Verknüpfung der Faktoren gehört an das Tarifwerk, nicht an den Faktor
 
-Ein Nachlass von 10 % und ein Zuschlag von 200 € ergeben je nach Reihenfolge
-verschiedene Prämien. Die Reihenfolge ist eine fachliche Festlegung des
-Versicherers, keine technische Nebensache — deshalb steht sie in den Daten und
-nicht in der Programmierung.
+Die erste Fassung dieses Kapitels sah nur ein Feld `reihenfolge` vor. Das genügt
+nicht, denn die Träger verknüpfen unterschiedlich.
+
+NAUTIMA legt ausdrücklich fest: *„Der zu berücksichtigende Prozentsatz ergibt
+sich aus dem **Saldo** aller Zuschläge und Nachlässe."* Erst addieren, dann
+einmal anwenden. Ein Charterzuschlag von +50 % und ein Seennachlass von −10 %
+ergeben +40 %, nicht `× 1,50 × 0,90`.
+
+Deshalb trägt `TARIFWERK` das Feld `verknuepfung_faktoren`:
+
+| Wert | Bedeutung |
+|---|---|
+| `SALDO_ADDITIV` | Alle Zu- und Abschläge werden saldiert, dann einmal angewandt |
+| `MULTIPLIKATIV_SEQUENZIELL` | Nacheinander multipliziert, in der Reihenfolge des Feldes `reihenfolge` |
+
+Ebenso an das Tarifwerk gehört `mindestbeitrag_greift`. NAUTIMA: der
+Mindestbeitrag *„darf nicht unterschritten werden (auch nicht durch Nachlass-
+und SFR-Gewährung)"* — er wirkt also **zuletzt**. Ein Modell, das ihn vor den
+Nachlässen prüft, rechnet falsch.
 
 ---
 
@@ -150,23 +183,34 @@ nicht in der Programmierung.
 
 ```
 1. Passendes TARIFWERK finden
-      je Versicherer: gültig am Stichtag, Produkt, Land, Status FREIGEGEBEN
+      je Versicherer und Sparte: gültig am Stichtag, Produkt, Land,
+      Status FREIGEGEBEN
 
 2. TARIFPOSITION treffen
-      Bootstyp × Wertbereich × Revier → Basisprämie
-      Keine Position gefunden → KEIN Ergebnis für diesen Träger
-      (nicht: geraten)
+      Merkmalskombination → Satz oder Betrag, je berechnungsart
+      status NICHT_ANGEBOTEN oder ANFRAGE → KEIN Ergebnis
+      keine Position gefunden      → KEIN Ergebnis  (nicht: geraten)
 
-3. TARIFFAKTOREN anwenden, in gespeicherter Reihenfolge
+3. GRUNDBEITRAG
+      SATZ_VON_VS  → Satz × Versicherungssumme
+      FESTBETRAG   → Betrag unverändert
 
-4. TARIFREGELN prüfen
-      Mindestprämie · Höchstprämie · Ausschlusskriterien
-      Ausschluss greift → dieser Träger liefert kein Ergebnis
+4. FAKTOREN anwenden, gemäß verknuepfung_faktoren
+      Faktoren mit voraussetzung_code nur, wenn die Voraussetzung greift
 
-5. VERSICHERUNGSSTEUER je Land aufschlagen
+5. SCHADENFREIHEITSRABATT vom Zwischenergebnis abziehen
 
-6. Ergebnis: eine Nettoprämie und eine Bruttoprämie je Träger
+6. MINDESTBEITRAG als Untergrenze   ← greift ZULETZT
+
+7. Über alle Sparten des Fahrzeugs summieren
+      Kasko + Haftpflicht (+ Insassenunfall) ergeben EINEN Beitrag je Träger
+
+8. VERSICHERUNGSSTEUER je Land aufschlagen
 ```
+
+Schritt 7 ist neu gegenüber der ersten Fassung: Ein Kunde vergleicht keine
+Kaskoprämien, sondern Gesamtbeiträge. Die Spanne entsteht über die Kombination,
+nicht je Sparte.
 
 ### Die Spanne entsteht von selbst
 
@@ -190,6 +234,7 @@ einzelne Zahl wäre die Lüge, nicht die Spanne.
 
 | Regel | Grund |
 |---|---|
+| `NICHT_ANGEBOTEN` wird **hingeschrieben**, nicht durch ein leeres Feld ausgedrückt | Leer ist mehrdeutig: vergessen oder nicht angeboten? NAUTIMA löst das vorbildlich mit „–" |
 | Die Berechnung läuft **serverseitig** im Domänenkern | Im Browser wären Tarifdaten öffentlich einsehbar — das ist Geschäftsgeheimnis des Versicherers |
 | Keine passende Position → **kein Ergebnis**, keine Schätzung | Eine geratene Prämie ist schlimmer als keine |
 | Weniger als zwei Träger mit Ergebnis → **keine Spanne anzeigen** | Eine „Spanne" aus einem Wert ist eine Punktangabe mit falscher Aura |
@@ -275,12 +320,13 @@ warten.
 
 ---
 
-## 10. Was als Nächstes hilft
+## 10. Die Import-Vorlage
 
-Eine repräsentative Excel-Datei eines Trägers — gerne mit erfundenen Zahlen, die
-**Struktur** ist entscheidend, nicht der Inhalt. Daraus lässt sich die
-Import-Vorlage konkret ableiten, statt sie zu erraten: welche Dimensionen es
-gibt, wie die Faktoren aufgebaut sind, ob Mindestprämien je Kombination oder
-global gelten.
+Liegt vor: [`vorlagen/tarif_import_vorlage.xlsx`](vorlagen/tarif_import_vorlage.xlsx),
+abgeleitet aus drei realen Quellen. Die Ableitung und die dabei gefundenen
+Befunde stehen in [`14_TARIFANALYSE.md`](14_TARIFANALYSE.md).
 
-Ohne diesen Blick bleibt die Vorlage eine Vermutung.
+Nächster Schritt ist nicht der Importer, sondern das **Ausfüllen der Vorlage für
+einen vollständigen Träger**. Eine Vorlage, die noch niemand ausgefüllt hat, ist
+eine Vermutung — der erste echte Träger deckt auf, was fehlt, und zwar bevor
+Code darauf aufbaut.
