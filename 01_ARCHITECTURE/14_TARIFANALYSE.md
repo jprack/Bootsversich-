@@ -5,6 +5,7 @@
 | Grundlage | Drei reale Quellen, übermittelt am 22.08.2026 |
 | Zweck | Ableitung der Import-Vorlage; Prüfung der Annahmen aus Kapitel 13 |
 | Ergebnis | Kapitel 13 ist an drei Stellen zu korrigieren. Zusätzlich elf Befunde im eigenen Entwurfstarif |
+| Entschieden | **B1 — Bandlücke 70.000–170.000: lineare Interpolation** (22.08.2026), siehe §6a |
 
 ---
 
@@ -246,13 +247,72 @@ die eine Richtprämie zeigt, sieht das trotzdem nach einem Fehler aus. Wer die
 Stufen nicht möchte, braucht keine Bänder, sondern eine stetige Funktion — das
 wäre eine Tarifentscheidung, keine Datenpflege.
 
-### Empfehlung
+### Entscheidung — 22.08.2026
 
-1. **Zuerst klären, ob es ein Tippfehler ist.** Eine Rückfrage bei der Person,
-   die die Tabelle gepflegt hat, ersetzt jede Rechnung.
-2. Ist es keiner: die **geometrischen** Sätze übernehmen.
-3. In beiden Fällen die 13 leeren Kombinationen ausdrücklich als „nicht
-   angeboten" kennzeichnen, statt sie leer zu lassen.
+**Lineare Interpolation.** Damit ist zugleich entschieden, dass die Bandlücke
+kein Tippfehler ist: Das Band `70.000 – 170.000` existiert und erhält eigene
+Sätze.
+
+Die gewählten Sätze:
+
+| Blatt | Revier | Bauart | SB 500 | SB 1.000 | SB 2.500 | SB 5.000 |
+|---|---|---|---|---|---|---|
+| SY | Binnen | Komfort | **0,56 %** | **0,48 %** | **0,44 %** | — |
+| SY | Binnen | Sport | **0,61 %** | **0,54 %** | — | — |
+
+| Blatt | Revier | Bauart | SB 1.000 | SB 2.500 | SB 5.000 | SB 7.500 | SB 10.000 |
+|---|---|---|---|---|---|---|---|
+| SY | Mittelmeer | Komfort | **0,68 %** | **0,60 %** | **0,52 %** | — | |
+| SY | Mittelmeer | Sport | **0,76 %** | **0,68 %** | **0,60 %** | — | |
+| MY | Binnen | Verdränger | **0,73 %** | **0,65 %** | **0,59 %** | — | — |
+| MY | Binnen | Gleiter | **0,81 %** | **0,75 %** | **0,69 %** | — | — |
+| MY | Mittelmeer | Verdränger | **0,78 %** | **0,70 %** | **0,64 %** | — | — |
+| MY | Mittelmeer | Gleiter | **0,86 %** | **0,80 %** | **0,74 %** | — | — |
+
+Pastefertig in [`vorlagen/b1_bandluecke.xlsx`](vorlagen/b1_bandluecke.xlsx),
+Blatt `Einfuegen`, in der Spaltenreihenfolge der Tarifblätter.
+
+### Ein Nebeneffekt, der die Wahl stützt
+
+Die Motoryacht-Binnenwerte sind im Entwurfstarif als Formel
+`= Mittelmeer − 0,0005` hinterlegt (Befund B5). Eine Interpolation sollte diese
+Regel nicht brechen.
+
+| Verfahren | Abstand Binnen zu Mittelmeer im neuen Band |
+|---|---|
+| **linear** | exakt 5 Basispunkte — in **allen sechs** Fällen |
+| geometrisch | 5 Basispunkte in fünf Fällen, **6 in einem** |
+
+Das ist kein Zufall: Eine lineare Interpolation ist verschiebungstreu. Ein
+konstanter Abstand zwischen zwei Ausgangstabellen bleibt im interpolierten Band
+erhalten. Die geometrische Variante hätte die Regel an einer Stelle gebrochen —
+und ein Bruch an einer Stelle ist schlimmer als gar keine Regel, weil er beim
+nächsten Pflegelauf niemandem auffällt.
+
+**Für die Umsetzung folgt daraus:** Die neue Binnen-Zeile im Blatt `MY Kasko`
+wird als **Formel** eingetragen, nicht als Zahl — genau wie die bestehenden
+Zeilen.
+
+### Was mit der Entscheidung in Kauf genommen wird
+
+| | bei 69.999 € | bei 70.000 € | bei 170.000 € | bei 170.001 € |
+|---|---|---|---|---|
+| Segelyacht Binnen Komfort, SB 500 | 455 € | 392 € | 952 € | 731 € |
+
+Zwei Prämienstufen statt einer, und die zweite ist mit −221 € die größere. Das
+ist bei gebänderten Tarifen üblich — NAUTIMA hat dieselbe Eigenschaft — fällt
+aber auf einer Website mit Richtprämie auf. Zu beobachten, sobald die
+Abweichungsmessung aus Kapitel 13 §7 läuft.
+
+Die mittlere Prämie im neuen Band bei 120.000 € Versicherungssumme beträgt über
+alle 23 Kombinationen **794 €**.
+
+### Offen bleibt
+
+Die **13 Kombinationen ohne Ankerwert** sind nicht interpoliert. Sie sind
+ausdrücklich als „nicht angeboten" zu kennzeichnen, statt leer zu bleiben — bei
+drei davon ist zuvor zu klären, ob der Selbstbehalt unterhalb von 170.000
+bewusst entfällt. Liste im Blatt `Ohne_Ankerwert`.
 
 ---
 

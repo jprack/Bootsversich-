@@ -39,7 +39,7 @@
 | [`12_BETRIEBSKONZEPT_HETZNER.md`](12_BETRIEBSKONZEPT_HETZNER.md) | Serveraufbau, Netz, Datenbank im Eigenbetrieb, Sicherungen, E-Mail-Zustellbarkeit, Einrichtungsreihenfolge | Betrieb |
 | [`13_TARIFWERK.md`](13_TARIFWERK.md) | Aus Excel und PDF wird eine versionierte, rechenbare Grundlage für die Richtprämie auf der Website | Produkt, Innendienst |
 | [`14_TARIFANALYSE.md`](14_TARIFANALYSE.md) | Auswertung der drei realen Tarifquellen, elf Befunde im eigenen Entwurfstarif, Ableitung der Import-Vorlage | Produkt, Innendienst |
-| [`vorlagen/`](vorlagen/) | `tarif_import_vorlage.xlsx` — sieben Blätter mit Beispielzeilen und mitrechnender Prüfung · `b1_bandluecke.xlsx` — interpolierte Sätze für die Bandlücke 70.000–170.000 | Innendienst |
+| [`vorlagen/`](vorlagen/) | `tarif_import_vorlage.xlsx` — sieben Blätter mit Beispielzeilen und mitrechnender Prüfung · `b1_bandluecke.xlsx` — **entschiedene** Sätze für die Bandlücke 70.000–170.000, pastefertig | Innendienst |
 | [`adr/`](adr/) | Architekturentscheidungen mit Kontext, Alternativen und Konsequenzen | Architektur |
 
 **Empfohlene Lesereihenfolge:** 01 → 03 → 04 → 07 → **11** → **13** → **14** → 02 → **12** → 05 → 06 → 08 → 09 → 10.
@@ -98,7 +98,7 @@ Ein Architekturentwurf, der keine offenen Punkte nennt, verbirgt sie nur.
 | ~~A-08~~ | ~~Richtprämie und Herkunft der Tarifdaten~~ | — | **Geschlossen:** Tarife liegen als PDF und Excel vor. Anzeige als Spanne aus eigenem Tarifwerk. Siehe [`13_TARIFWERK.md`](13_TARIFWERK.md) und ADR-0012 |
 | **A-11** | **Ist die Anzeige der Prämien je Versicherer vertraglich zulässig?** Die Tarifdaten gehören den Trägern | Bau von M2; ein Träger ohne Erlaubnis fließt nicht in die Spanne ein | Produktverantwortung je Träger, **vor** Welle 1 |
 | A-12 | Versicherungssteuersätze je Land und Sparte. Aus der Charter-Preisliste ließen sich **11 %** zurückrechnen — ein Indiz, kein Beleg | Bruttoprämie der Indikation | Steuerberatung |
-| **A-13** | **Elf Befunde im eigenen Entwurfstarif 2026**, davon vier rechnerisch wirksam: Bandlücke 70.000–170.000, Widerspruch Alterszuschlag gegen Anfragepflicht, Haftpflicht-Aufschlag folgt nicht der eigenen Regel, fehlende Mindestprämie Haftpflicht | Erstbefüllung des Tarifwerks | Produktverantwortung, siehe [`14_TARIFANALYSE.md`](14_TARIFANALYSE.md) §6 |
+| **A-13** | **Zehn offene Befunde im eigenen Entwurfstarif 2026.** B1 (Bandlücke) ist entschieden: lineare Interpolation. Offen bleiben drei rechnerisch wirksame: Widerspruch Alterszuschlag gegen Anfragepflicht (B2), Haftpflicht-Aufschlag folgt nicht der eigenen Regel (B3), fehlende Mindestprämie Haftpflicht (B4) | Erstbefüllung des Tarifwerks | Produktverantwortung, siehe [`14_TARIFANALYSE.md`](14_TARIFANALYSE.md) §6 |
 | **A-09** | **Versandweg für Vorgangsmails**: Transaktionsdienst mit AVV und EU-Standort oder eigener Relay | Welle 2, Zustellbarkeit der Angebotsanfragen | Betrieb + Datenschutz |
 | A-04 | Signaturanbieter und erreichbare Signaturstufe | Antragsstrecke | Produktverantwortung, Rechtsberatung |
 | A-05 | Notwendigkeit einer Datenschutz-Folgenabschätzung für Scoring und Profiling | Produktivgang von M1 und M8 | Datenschutzbeauftragte Person |
