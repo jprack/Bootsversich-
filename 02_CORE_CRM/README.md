@@ -92,6 +92,7 @@ Versicherer. Die Begründungen stehen in
 | 10 · Umsetzung WordPress | [`12_UMSETZUNG_WORDPRESS.md`](12_UMSETZUNG_WORDPRESS.md) |
 | — Startkonfiguration (C-02, C-03, C-04) | [`13_STARTKONFIGURATION.md`](13_STARTKONFIGURATION.md) |
 | — Polizzenimport aus PDF | [`14_POLIZZENIMPORT.md`](14_POLIZZENIMPORT.md) |
+| — Leadgenerierung (eigenes Modul) | [`../03_LEAD_GENERATION_ENGINE/`](../03_LEAD_GENERATION_ENGINE/README.md) |
 | — Kundenakte | [`05_KUNDENAKTE.md`](05_KUNDENAKTE.md) |
 | — Vertrags- und Bootsverwaltung | [`06_VERTRAG_UND_BOOT.md`](06_VERTRAG_UND_BOOT.md) |
 | — Dokumentenmanagement | [`08_DOKUMENTE.md`](08_DOKUMENTE.md) |
