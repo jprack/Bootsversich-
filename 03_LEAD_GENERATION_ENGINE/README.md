@@ -127,9 +127,27 @@ zuerst — ihr Händlerverzeichnis erschließt den ersten Cluster fast vollstän
 | — Dublettenprüfung | [`06_DUBLETTENPRUEFUNG.md`](06_DUBLETTENPRUEFUNG.md) |
 | — Marketingübergabe | [`10_MARKETINGUEBERGABE.md`](10_MARKETINGUEBERGABE.md) |
 | — Modulentscheidungen | [`adr/`](adr/README.md) |
+| — **Prüfstand (lauffähig)** | [`demo/README.md`](demo/README.md) · `schema/` · `demo/run_demo.sh` |
 
 **Lesereihenfolge:** Summary → 01 → 02 → 03 → 05 → 07 → 10.
 Für die Geschäftsführung genügen Summary, 02, 10 und 14.
+
+---
+
+## Prüfstand
+
+Das Modul ist ein Fachkonzept — aber die tragenden Zusicherungen sind
+**lauffähig belegt**. `demo/run_demo.sh` legt eine PostgreSQL-Datenbank an,
+spielt Schema, Engine und bewusst unsaubere Demodaten ein und prüft
+**50 Zusicherungen** gegen die laufende Engine: Normalisierung, Sperrwirkung vor
+der Anlage, die Dublettenregeln D1–D8, Score mit Herleitung, die fünf
+Freigabeprüfungen, Aufgabenerzeugung mit Dublettenschutz, Lastschutz,
+Kanalmatrix und Abdeckungsgrad.
+
+Der aussagekräftigste Test ist der **wiederholte Lauf derselben Quelle**: Er
+darf kein einziges neues Objekt erzeugen (Abnahmepunkt 7 aus Kapitel 14).
+
+Alle Demodaten sind erfunden; alle Domains liegen unter `.example`.
 
 ---
 
