@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  DEFAULT_REMINDER_PLAN,
-  suppressionReason,
-  type ReminderContext,
-} from '../reminders.js';
+import { DEFAULT_REMINDER_PLAN, suppressionReason, type ReminderContext } from '../reminders.js';
 
 const versandfaehig: ReminderContext = {
   caseOpen: true,
@@ -20,7 +16,12 @@ describe('Erinnerungsplan', () => {
   });
 
   it('schreibt nur die ersten beiden Stufen an den Kunden', () => {
-    expect(DEFAULT_REMINDER_PLAN.map((s) => s.notifiesCustomer)).toEqual([true, true, false, false]);
+    expect(DEFAULT_REMINDER_PLAN.map((s) => s.notifiesCustomer)).toEqual([
+      true,
+      true,
+      false,
+      false,
+    ]);
   });
 
   it('steigert die Dringlichkeit monoton', () => {
@@ -46,7 +47,9 @@ describe('Unterdrückung von Erinnerungen', () => {
   });
 
   it('unterdrückt nach Ablehnung durch den Kunden', () => {
-    expect(suppressionReason({ ...versandfaehig, customerDeclined: true })).toBe('CUSTOMER_DECLINED');
+    expect(suppressionReason({ ...versandfaehig, customerDeclined: true })).toBe(
+      'CUSTOMER_DECLINED',
+    );
   });
 
   it('unterdrückt bei abgelaufenem Angebot', () => {

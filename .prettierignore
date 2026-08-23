@@ -6,3 +6,8 @@ coverage
 pnpm-lock.yaml
 01_CRM_ENGINE
 apps/api/prisma/migrations
+
+# Fachdokumente werden von Hand gesetzt (Tabellen, ASCII-Diagramme).
+# Prettier richtet Tabellen neu aus und erzeugt Diffrauschen ohne Nutzen.
+01_ARCHITECTURE
+02_CORE_CRM

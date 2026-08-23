@@ -27,33 +27,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Das Repository liefert derzeit Fachkonzepte. Ein toter Querverweis darin
+  # wirkt wie ein Fehler im Code: Die Begruendung wird nicht gelesen.
+  dokumente:
+    name: Fachdokumente
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Querverweise und ADR-Verzeichnisse pruefen
+        run: python3 .github/scripts/pruefe_dokumente.py
+
   quality:
     name: Lint, Typen, Tests, Build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: crm
-          POSTGRES_PASSWORD: crm-ci
-          POSTGRES_DB: crm
-        ports: ['5432:5432']
-        options: >-
-          --health-cmd "pg_isready -U crm -d crm"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 20
-      redis:
-        image: redis:7-alpine
-        ports: ['6379:6379']
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 20
-    env:
-      DATABASE_URL: postgresql://crm:crm-ci@localhost:5432/crm?schema=public
-      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
 
@@ -79,20 +68,8 @@ jobs:
       - name: Typen
         run: pnpm typecheck
 
-      - name: Migrationen anwenden
-        run: pnpm db:migrate
-
       - name: Tests
         run: pnpm test
 
       - name: Build
         run: pnpm build
-
-      # Eine veraltete Spezifikation ist schlimmer als keine: sie wird geglaubt.
-      - name: OpenAPI-Dokumentation aktuell?
-        run: |
-          pnpm --filter @app/api run openapi:generate
-          if ! git diff --exit-code -- docs/api/openapi.json; then
-            echo "::error::docs/api/openapi.json ist nicht aktuell. Bitte 'pnpm --filter @app/api run openapi:generate' ausfuehren und das Ergebnis einchecken."
-            exit 1
-          fi

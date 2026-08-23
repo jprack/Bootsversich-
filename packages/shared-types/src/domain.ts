@@ -124,7 +124,13 @@ export const DOCUMENT_TYPES = [
 ] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
-export const DOCUMENT_ORIGINS = ['CUSTOMER', 'AGENT', 'SYSTEM', 'CALLIDUS', 'SIGNATURE_PROVIDER'] as const;
+export const DOCUMENT_ORIGINS = [
+  'CUSTOMER',
+  'AGENT',
+  'SYSTEM',
+  'CALLIDUS',
+  'SIGNATURE_PROVIDER',
+] as const;
 export type DocumentOrigin = (typeof DOCUMENT_ORIGINS)[number];
 
 export const SCAN_STATUSES = ['PENDING', 'CLEAN', 'INFECTED', 'FAILED'] as const;

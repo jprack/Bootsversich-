@@ -27,7 +27,11 @@ const fieldSchema = z
     title: z.string().min(1),
     description: z.string().max(500).optional(),
     format: z.enum(ALLOWED_FORMATS).optional(),
-    enum: z.array(z.union([z.string(), z.number(), z.boolean()])).min(1).max(100).optional(),
+    enum: z
+      .array(z.union([z.string(), z.number(), z.boolean()]))
+      .min(1)
+      .max(100)
+      .optional(),
     minimum: z.number().optional(),
     maximum: z.number().optional(),
     minLength: z.number().int().min(0).optional(),
@@ -91,7 +95,12 @@ export const productUiSchemaSchema = z
     groups: z
       .array(z.object({ title: z.string().min(1), fields: z.array(z.string()).min(1) }).strict())
       .default([]),
-    widgets: z.record(z.string(), z.enum(['text', 'textarea', 'select', 'radio', 'checkbox', 'date', 'number'])).default({}),
+    widgets: z
+      .record(
+        z.string(),
+        z.enum(['text', 'textarea', 'select', 'radio', 'checkbox', 'date', 'number']),
+      )
+      .default({}),
   })
   .strict();
 
@@ -251,7 +260,9 @@ export function validateProductData(
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
     return {
       valid: false,
-      issues: [{ pointer: '/', rule: 'type', message: 'Es wurden keine Produktdaten übermittelt.' }],
+      issues: [
+        { pointer: '/', rule: 'type', message: 'Es wurden keine Produktdaten übermittelt.' },
+      ],
     };
   }
 

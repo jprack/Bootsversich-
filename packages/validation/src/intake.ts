@@ -1,11 +1,6 @@
 /** Öffentliche Produktanfrage und Angebotsübernahme. */
 
-import {
-  COUNTRIES,
-  LEAD_SOURCES,
-  PAYMENT_FREQUENCIES,
-  QUOTE_ORIGINS,
-} from '@app/shared-types';
+import { COUNTRIES, LEAD_SOURCES, PAYMENT_FREQUENCIES, QUOTE_ORIGINS } from '@app/shared-types';
 import { z } from 'zod';
 import { freeTextSchema, isoDateSchema, moneySchema, uuidSchema } from './common.js';
 import { consentInputSchema, customerInputSchema } from './customer.js';

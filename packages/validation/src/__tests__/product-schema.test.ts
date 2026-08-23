@@ -13,7 +13,13 @@ const schema: ProductInputSchema = productInputSchemaSchema.parse({
   additionalProperties: false,
   required: ['objectValue', 'coverageStart'],
   properties: {
-    objectValue: { type: 'number', title: 'Wert des Objekts', minimum: 0, maximum: 10_000_000, 'x-searchable': true },
+    objectValue: {
+      type: 'number',
+      title: 'Wert des Objekts',
+      minimum: 0,
+      maximum: 10_000_000,
+      'x-searchable': true,
+    },
     coverageStart: { type: 'string', title: 'Versicherungsbeginn', format: 'date' },
     usage: { type: 'string', title: 'Nutzung', enum: ['privat', 'gewerblich'] },
     previousDamage: { type: 'boolean', title: 'Vorschäden' },
@@ -52,7 +58,10 @@ describe('Produktdaten — Prüfung gegen das Schema', () => {
   });
 
   it('prüft Zahlengrenzen', () => {
-    const zuGross = validateProductData(schema, { objectValue: 20_000_000, coverageStart: '2026-09-01' });
+    const zuGross = validateProductData(schema, {
+      objectValue: 20_000_000,
+      coverageStart: '2026-09-01',
+    });
     expect(zuGross.valid).toBe(false);
     const negativ = validateProductData(schema, { objectValue: -1, coverageStart: '2026-09-01' });
     expect(negativ.valid).toBe(false);
@@ -66,7 +75,10 @@ describe('Produktdaten — Prüfung gegen das Schema', () => {
   });
 
   it('wandelt keine Typen still um', () => {
-    const result = validateProductData(schema, { objectValue: '42000', coverageStart: '2026-09-01' });
+    const result = validateProductData(schema, {
+      objectValue: '42000',
+      coverageStart: '2026-09-01',
+    });
     expect(result.valid).toBe(false);
   });
 
@@ -89,7 +101,11 @@ describe('Produktdaten — Prüfung gegen das Schema', () => {
   it('liefert bei wiederholtem Aufruf mit Cache-Schlüssel dasselbe Ergebnis', () => {
     const key = 'DEMO-PRODUCT-A|AT|1';
     const erste = validateProductData(schema, { objectValue: 1, coverageStart: '2026-01-01' }, key);
-    const zweite = validateProductData(schema, { objectValue: 1, coverageStart: '2026-01-01' }, key);
+    const zweite = validateProductData(
+      schema,
+      { objectValue: 1, coverageStart: '2026-01-01' },
+      key,
+    );
     expect(erste.valid).toBe(true);
     expect(zweite.valid).toBe(true);
   });
@@ -112,7 +128,11 @@ describe('Produktschema — Aufbau', () => {
       additionalProperties: false,
       required: [],
       properties: {
-        gesundheit: { type: 'string', title: 'Gesundheitsangaben', 'x-classification': 'SPECIAL_CATEGORY' },
+        gesundheit: {
+          type: 'string',
+          title: 'Gesundheitsangaben',
+          'x-classification': 'SPECIAL_CATEGORY',
+        },
       },
     });
     expect(result.success).toBe(false);

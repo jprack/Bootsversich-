@@ -126,10 +126,10 @@ Erläuterung, nicht die Quelle.
 
 ## Warum bestimmte Felder **nicht** existieren
 
-| Nicht modelliert | Grund |
-|---|---|
-| Bankverbindung / IBAN | Im MVP für keinen Prozessschritt erforderlich (Datenminimierung). Aufnahme erst nach Beleg über F-16. |
-| Gesundheitsdaten | Besondere Kategorie nach Art. 9 DSGVO. Kein dokumentierter Zweck im MVP. |
-| Sozialversicherungsnummer / Steuer-ID | Kein Zweck im MVP. |
-| Bonitätsdaten | Kein Zweck im MVP, würde Profiling-Anforderungen auslösen. |
-| Passwort-Hashes | Authentifizierung liegt beim OIDC-Provider. |
+| Nicht modelliert                      | Grund                                                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Bankverbindung / IBAN                 | Im MVP für keinen Prozessschritt erforderlich (Datenminimierung). Aufnahme erst nach Beleg über F-16. |
+| Gesundheitsdaten                      | Besondere Kategorie nach Art. 9 DSGVO. Kein dokumentierter Zweck im MVP.                              |
+| Sozialversicherungsnummer / Steuer-ID | Kein Zweck im MVP.                                                                                    |
+| Bonitätsdaten                         | Kein Zweck im MVP, würde Profiling-Anforderungen auslösen.                                            |
+| Passwort-Hashes                       | Authentifizierung liegt beim OIDC-Provider.                                                           |

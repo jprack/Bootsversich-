@@ -73,8 +73,12 @@ describe('Geldbeträge — Toleranz für Prüfregeln', () => {
   });
 
   it('akzeptiert eine absolute Cent-Toleranz', () => {
-    expect(moneyWithinTolerance(eur('100.02'), eur('100.00'), { toleranceMinorUnits: 2n })).toBe(true);
-    expect(moneyWithinTolerance(eur('100.03'), eur('100.00'), { toleranceMinorUnits: 2n })).toBe(false);
+    expect(moneyWithinTolerance(eur('100.02'), eur('100.00'), { toleranceMinorUnits: 2n })).toBe(
+      true,
+    );
+    expect(moneyWithinTolerance(eur('100.03'), eur('100.00'), { toleranceMinorUnits: 2n })).toBe(
+      false,
+    );
   });
 
   it('akzeptiert eine relative Toleranz', () => {

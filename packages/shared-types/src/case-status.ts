@@ -77,7 +77,10 @@ export const CASE_TRANSITIONS: readonly CaseTransition[] = [
     from: ['DRAFT'],
     to: 'DATA_COLLECTION',
     actors: ['AGENT', 'BACK_OFFICE', 'SYSTEM'],
-    preconditions: ['Produkt und Land sind gesetzt', 'Eine gültige ProductSchema-Version ist zugeordnet'],
+    preconditions: [
+      'Produkt und Land sind gesetzt',
+      'Eine gültige ProductSchema-Version ist zugeordnet',
+    ],
     sideEffects: ['WorkflowInstance wird angelegt'],
     auditEvent: 'case.data_collection_started',
     retryable: true,
@@ -89,7 +92,10 @@ export const CASE_TRANSITIONS: readonly CaseTransition[] = [
     to: 'DATA_INCOMPLETE',
     actors: ['SYSTEM', 'AGENT', 'BACK_OFFICE'],
     preconditions: ['Mindestens ein Pflichtfeld des ProductSchema fehlt'],
-    sideEffects: ['Aufgabe für den zuständigen Agenten', 'Optional: Kundenanfrage zur Datenergänzung'],
+    sideEffects: [
+      'Aufgabe für den zuständigen Agenten',
+      'Optional: Kundenanfrage zur Datenergänzung',
+    ],
     auditEvent: 'case.data_marked_incomplete',
     retryable: true,
     compensation: null,
@@ -125,7 +131,10 @@ export const CASE_TRANSITIONS: readonly CaseTransition[] = [
     from: ['READY_FOR_QUOTE', 'MANUAL_REVIEW_REQUIRED'],
     to: 'QUOTE_SUBMISSION_PENDING',
     actors: ['AGENT', 'BACK_OFFICE', 'SYSTEM'],
-    preconditions: ['Ein Callidus-Adapter ist für Produkt und Land konfiguriert', 'Idempotenzschlüssel ist vergeben'],
+    preconditions: [
+      'Ein Callidus-Adapter ist für Produkt und Land konfiguriert',
+      'Idempotenzschlüssel ist vergeben',
+    ],
     sideEffects: ['CallidusTransmission wird angelegt', 'Übermittlungsjob wird eingereiht'],
     auditEvent: 'case.quote_request_submitted',
     retryable: true,
@@ -147,7 +156,10 @@ export const CASE_TRANSITIONS: readonly CaseTransition[] = [
     from: ['QUOTE_SUBMISSION_PENDING'],
     to: 'QUOTE_SUBMITTED',
     actors: ['SYSTEM', 'AGENT'],
-    preconditions: ['Übermittlung ist bestätigt', 'Externe Referenz ist erfasst, sofern die Gegenseite eine vergibt'],
+    preconditions: [
+      'Übermittlung ist bestätigt',
+      'Externe Referenz ist erfasst, sofern die Gegenseite eine vergibt',
+    ],
     sideEffects: ['Frist für die Antworterwartung wird gesetzt'],
     auditEvent: 'case.quote_submission_confirmed',
     retryable: false,
@@ -158,7 +170,10 @@ export const CASE_TRANSITIONS: readonly CaseTransition[] = [
     from: ['QUOTE_SUBMITTED'],
     to: 'QUOTE_RECEIVED',
     actors: ['SYSTEM', 'AGENT'],
-    preconditions: ['Angebotsdaten sind strukturiert erfasst', 'Zugehörigkeit zum Vorgang ist eindeutig'],
+    preconditions: [
+      'Angebotsdaten sind strukturiert erfasst',
+      'Zugehörigkeit zum Vorgang ist eindeutig',
+    ],
     sideEffects: ['Quote wird angelegt', 'Dokumente werden zugeordnet'],
     auditEvent: 'case.quote_received',
     retryable: false,
@@ -293,7 +308,9 @@ export const CASE_TRANSITIONS: readonly CaseTransition[] = [
     from: ['SIGNED'],
     to: 'DOCUMENTS_INCOMPLETE',
     actors: ['SYSTEM', 'AGENT', 'BACK_OFFICE'],
-    preconditions: ['Mindestens ein für die Einreichung erforderliches Dokument fehlt oder ist nicht freigegeben'],
+    preconditions: [
+      'Mindestens ein für die Einreichung erforderliches Dokument fehlt oder ist nicht freigegeben',
+    ],
     sideEffects: ['Aufgabe für den Agenten', 'Kundenanfrage zur Nachreichung'],
     auditEvent: 'case.documents_marked_incomplete',
     retryable: true,
@@ -341,7 +358,10 @@ export const CASE_TRANSITIONS: readonly CaseTransition[] = [
     from: ['CALLIDUS_SUBMISSION_PENDING'],
     to: 'SUBMITTED_TO_CALLIDUS',
     actors: ['SYSTEM', 'AGENT'],
-    preconditions: ['Übermittlung ist bestätigt', 'Externe Referenz ist erfasst, sofern die Gegenseite eine vergibt'],
+    preconditions: [
+      'Übermittlung ist bestätigt',
+      'Externe Referenz ist erfasst, sofern die Gegenseite eine vergibt',
+    ],
     sideEffects: ['Frist für die Rückmeldung wird gesetzt'],
     auditEvent: 'case.callidus_submission_confirmed',
     retryable: false,
@@ -417,10 +437,7 @@ export type TransitionCheck =
   | { readonly allowed: false; readonly reason: TransitionRejection };
 
 export type TransitionRejection =
-  | 'UNKNOWN_TRANSITION'
-  | 'WRONG_SOURCE_STATUS'
-  | 'ACTOR_NOT_PERMITTED'
-  | 'TERMINAL_STATUS';
+  'UNKNOWN_TRANSITION' | 'WRONG_SOURCE_STATUS' | 'ACTOR_NOT_PERMITTED' | 'TERMINAL_STATUS';
 
 /**
  * Reine Prüfung eines Übergangs. Kennt weder Datenbank noch Berechtigungen

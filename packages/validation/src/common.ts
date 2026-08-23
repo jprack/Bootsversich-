@@ -41,7 +41,10 @@ export const phoneSchema = z
   .pipe(
     z
       .string()
-      .regex(/^\+?[1-9]\d{6,14}$/, 'Bitte eine gültige Telefonnummer angeben, z. B. +43 660 1234567.'),
+      .regex(
+        /^\+?[1-9]\d{6,14}$/,
+        'Bitte eine gültige Telefonnummer angeben, z. B. +43 660 1234567.',
+      ),
   );
 
 export const countrySchema = z.enum(COUNTRIES);
@@ -81,7 +84,10 @@ export function birthDateSchema(today: Date = new Date()) {
       Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
     );
     if (date.getTime() > heute.getTime()) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Das Geburtsdatum liegt in der Zukunft.' });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Das Geburtsdatum liegt in der Zukunft.',
+      });
       return;
     }
     const aeltesteZulaessige = new Date(heute);

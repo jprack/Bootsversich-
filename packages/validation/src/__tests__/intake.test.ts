@@ -64,7 +64,10 @@ describe('Öffentliche Produktanfrage', () => {
   });
 
   it('lehnt widersprüchliche Mehrfachangaben zum selben Zweck ab', () => {
-    const result = publicIntakeSchema.safeParse({ ...intake, consents: [...consents, consents[0]] });
+    const result = publicIntakeSchema.safeParse({
+      ...intake,
+      consents: [...consents, consents[0]],
+    });
     expect(result.success).toBe(false);
   });
 

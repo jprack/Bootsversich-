@@ -29,7 +29,12 @@ export const envSchema = z
     CORS_ALLOWED_ORIGINS: z
       .string()
       .min(1)
-      .transform((value) => value.split(',').map((entry) => entry.trim()).filter(Boolean)),
+      .transform((value) =>
+        value
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean),
+      ),
 
     // --- Datenhaltung ---
     DATABASE_URL: z.string().startsWith('postgresql://'),
@@ -75,7 +80,11 @@ export const envSchema = z
     SIGNATURE_WEBHOOK_SECRET: secret,
 
     // --- Upload-Grenzen ---
-    UPLOAD_MAX_BYTES: z.coerce.number().int().positive().default(20 * 1024 * 1024),
+    UPLOAD_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(20 * 1024 * 1024),
   })
   .superRefine((env, ctx) => {
     // Der reale Callidus-Adapter ist nicht freigegeben (CD-003).

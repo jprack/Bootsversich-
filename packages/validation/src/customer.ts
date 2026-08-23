@@ -38,8 +38,16 @@ export const addressSchema = z
 
 export const contactMethodSchema = z
   .discriminatedUnion('kind', [
-    z.object({ kind: z.literal('EMAIL'), value: emailSchema, isPrimary: z.boolean().default(false) }),
-    z.object({ kind: z.literal('PHONE'), value: phoneSchema, isPrimary: z.boolean().default(false) }),
+    z.object({
+      kind: z.literal('EMAIL'),
+      value: emailSchema,
+      isPrimary: z.boolean().default(false),
+    }),
+    z.object({
+      kind: z.literal('PHONE'),
+      value: phoneSchema,
+      isPrimary: z.boolean().default(false),
+    }),
   ])
   .and(z.object({}).strict().partial());
 

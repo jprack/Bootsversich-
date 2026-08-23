@@ -102,19 +102,25 @@ describe('Konfiguration — Schutz des Produktivbetriebs', () => {
   });
 
   it('erlaubt in der Entwicklung, was in Produktion untersagt ist', () => {
-    expect(() => loadEnv({ ...gueltig, MALWARE_SCANNER: 'noop', EMAIL_PROVIDER: 'console' })).not.toThrow();
+    expect(() =>
+      loadEnv({ ...gueltig, MALWARE_SCANNER: 'noop', EMAIL_PROVIDER: 'console' }),
+    ).not.toThrow();
   });
 });
 
 describe('Feature Flags', () => {
   it('hält gesperrte Flags auch gegen eine Übersteuerung aus', () => {
     expect(isFeatureEnabled('callidus.realAdapter', { 'callidus.realAdapter': true })).toBe(false);
-    expect(isFeatureEnabled('signature.realProvider', { 'signature.realProvider': true })).toBe(false);
+    expect(isFeatureEnabled('signature.realProvider', { 'signature.realProvider': true })).toBe(
+      false,
+    );
   });
 
   it('lässt nicht gesperrte Flags übersteuern', () => {
     expect(isFeatureEnabled('portal.customerUploads')).toBe(true);
-    expect(isFeatureEnabled('portal.customerUploads', { 'portal.customerUploads': false })).toBe(false);
+    expect(isFeatureEnabled('portal.customerUploads', { 'portal.customerUploads': false })).toBe(
+      false,
+    );
   });
 
   it('liefert ohne Übersteuerung die Vorgabe', () => {

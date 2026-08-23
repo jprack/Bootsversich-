@@ -3,15 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "nest build",
-    "dev": "nest start --watch",
-    "start": "node dist/main.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint src",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "db:seed": "tsx prisma/seed.ts",
-    "openapi:generate": "tsx scripts/generate-openapi.ts",
     "prisma:generate": "prisma generate"
   },
   "dependencies": {

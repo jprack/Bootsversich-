@@ -20,23 +20,23 @@ Agent ─ Agentenportal ─┘                       ├─ Signaturdienst (exte
 
 ## Im Umfang
 
-| # | Fähigkeit | Slice |
-|---|---|---|
-| 1 | Lokale Entwicklungsumgebung, CI-Prüfungen, Migrationen, synthetische Seeds | 1 |
-| 2 | Identität, Rollen, Berechtigungen (serverseitig, objektbezogen) | 2 |
-| 3 | Personen, Adressen, Kontaktwege, Einwilligungen | 3 |
-| 4 | Leads und Versicherungsvorgänge mit expliziter Statusmaschine | 3 |
-| 5 | Versionierte Produktdefinitionen und dynamische, datengetriebene Formulare | 4 |
-| 6 | Öffentliche Produktanfrage mit serverseitiger Validierung | 4 |
-| 7 | Angebotsanfrage über `MockCallidusAdapter` | 5 |
-| 8 | Angebotsimport und deterministische, erklärbare Prüfregeln | 6 |
-| 9 | Menschliche Freigabe im Agentenportal | 7 |
-| 10 | Kundenportal: Vorgang ansehen, Daten ergänzen, Angebot einsehen | 7 |
-| 11 | Dokumente: Upload, Prüfsumme, Malware-Scan, signierte Downloads | 8 |
-| 12 | Signatur über `MockSignatureProvider`, idempotente Ereignisverarbeitung | 9 |
-| 13 | `ManualCallidusAdapter`: Exportpaket, Übergabe, externe Referenz | 10 |
-| 14 | Aufgaben, Erinnerungen, Eskalationen | 11 |
-| 15 | Audit, Datenschutzprozesse, Betriebshandbuch | 12 |
+| #   | Fähigkeit                                                                  | Slice |
+| --- | -------------------------------------------------------------------------- | ----- |
+| 1   | Lokale Entwicklungsumgebung, CI-Prüfungen, Migrationen, synthetische Seeds | 1     |
+| 2   | Identität, Rollen, Berechtigungen (serverseitig, objektbezogen)            | 2     |
+| 3   | Personen, Adressen, Kontaktwege, Einwilligungen                            | 3     |
+| 4   | Leads und Versicherungsvorgänge mit expliziter Statusmaschine              | 3     |
+| 5   | Versionierte Produktdefinitionen und dynamische, datengetriebene Formulare | 4     |
+| 6   | Öffentliche Produktanfrage mit serverseitiger Validierung                  | 4     |
+| 7   | Angebotsanfrage über `MockCallidusAdapter`                                 | 5     |
+| 8   | Angebotsimport und deterministische, erklärbare Prüfregeln                 | 6     |
+| 9   | Menschliche Freigabe im Agentenportal                                      | 7     |
+| 10  | Kundenportal: Vorgang ansehen, Daten ergänzen, Angebot einsehen            | 7     |
+| 11  | Dokumente: Upload, Prüfsumme, Malware-Scan, signierte Downloads            | 8     |
+| 12  | Signatur über `MockSignatureProvider`, idempotente Ereignisverarbeitung    | 9     |
+| 13  | `ManualCallidusAdapter`: Exportpaket, Übergabe, externe Referenz           | 10    |
+| 14  | Aufgaben, Erinnerungen, Eskalationen                                       | 11    |
+| 15  | Audit, Datenschutzprozesse, Betriebshandbuch                               | 12    |
 
 ## Außerhalb des Umfangs
 

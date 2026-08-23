@@ -25,9 +25,15 @@
   "ssoSessionMaxLifespan": 36000,
   "roles": {
     "realm": [
-      { "name": "AGENT", "description": "Versicherungsagent: bearbeitet Vorgaenge und gibt Angebote frei" },
+      {
+        "name": "AGENT",
+        "description": "Versicherungsagent: bearbeitet Vorgaenge und gibt Angebote frei"
+      },
       { "name": "BACK_OFFICE", "description": "Innendienst: bereitet vor, ohne Angebotsfreigabe" },
-      { "name": "ADMIN", "description": "Administration: Benutzer, Produkte, Regeln, Auditeinsicht" },
+      {
+        "name": "ADMIN",
+        "description": "Administration: Benutzer, Produkte, Regeln, Auditeinsicht"
+      },
       { "name": "CUSTOMER", "description": "Kunde: sieht ausschliesslich eigene Vorgaenge" }
     ]
   },
