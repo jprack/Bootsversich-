@@ -215,6 +215,17 @@ BEGIN
 
   IF v_vorhanden IS NOT NULL THEN
     UPDATE lg_objekt SET zuletzt_gesehen_am = current_date WHERE id = v_vorhanden;
+
+    -- Der Fund in einer zweiten Quelle ist selbst eine Tatsache: er belegt
+    -- Marktsichtbarkeit (B5). Der geltende Feldwert bleibt unberuehrt —
+    -- der neue Beleg wird als nicht geltender Nachweis gefuehrt.
+    INSERT INTO lg_beleg (id, objekt_id, feldname, wert, quelle_id, lauf_id,
+                          fundstelle, ist_aktuell)
+    SELECT gen_random_uuid(), v_vorhanden, 'name', p_name, v_quelle, p_lauf_id,
+           p_fundstelle, false
+    WHERE NOT EXISTS (SELECT 1 FROM lg_beleg b
+                       WHERE b.objekt_id = v_vorhanden AND b.quelle_id = v_quelle);
+
     UPDATE lg_lauf SET anzahl_dublette = anzahl_dublette + 1 WHERE id = p_lauf_id;
     RETURN QUERY SELECT 'BEKANNT'::text, v_vorhanden, 'Domain bereits erfasst'::text;
     RETURN;

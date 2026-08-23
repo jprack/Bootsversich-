@@ -165,6 +165,13 @@ SELECT pg_temp.pruefe('T22','Bewertung',
   'Kein Potenzialwert ohne Gespraech',
   '0', (SELECT count(*)::text FROM lg_objekt WHERE potenzialwert IS NOT NULL));
 
+SELECT pg_temp.pruefe('T22b','Bewertung',
+  'Ein Fund in einer zweiten Quelle hebt die Marktsichtbarkeit (B5)',
+  '7',
+  (SELECT (p->>'punkte') FROM lg_objekt o,
+          jsonb_array_elements(o.score_herleitung->'posten') p
+    WHERE o.domain_norm = 'hafen-nordufer.example' AND p->>'code' = 'B5'));
+
 SELECT pg_temp.pruefe('T23','Bewertung',
   'Basiswert liegt in [0,100]',
   '0', (SELECT count(*)::text FROM lg_objekt
