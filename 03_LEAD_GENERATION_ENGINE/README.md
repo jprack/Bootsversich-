@@ -157,6 +157,7 @@ Alle Demodaten sind erfunden; alle Domains liegen unter `.example`.
 | --- | --- |
 | `01_ARCHITECTURE` | Füllt Modul M2 (Leadgenerierung) fachlich aus. Prinzipien, Sicherheit und Betrieb gelten unverändert |
 | `02_CORE_CRM` | Der Rechercheraum liefert; das CRM führt. Organisationen, Rollen, Kontakte, Aufgaben und Einwilligungen entstehen dort |
+| `04_DEALER_DATABASE` | **Übernimmt** freigegebene Händler und führt sie weiter. Der Standortbefund aus dem Prüflauf ist dort als ADR-0002 aufgelöst |
 | `01_CRM_ENGINE` | Bewertet **Verhalten** im Bestand. Der Basiswert dieses Moduls bewertet **Recherchierbares** vor dem ersten Kontakt — zwei verschiedene Zahlen, bewusst getrennt |
 | Tarifwerk | Liefert zwei Argumente: die Charter-Festpreisliste als fertiges Produkt für Z4 und den Premiumwerften-Nachlass, der eine gepflegte Herstellerliste voraussetzt |
 
