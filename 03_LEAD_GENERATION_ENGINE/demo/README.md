@@ -29,6 +29,13 @@ Voraussetzung: PostgreSQL 14 oder neuer (`psql`, für die temporäre Instanz auc
 | **Abdeckungsgrad** | Die Leitkennzahl, mit Nenner und dessen Erhebungsdatum |
 | **Tagesliste** | Die erzeugten Aufgaben, im Rahmen des Kontingents |
 
+Der **vollständige Endstand** — jede Tabelle, jeder Beleg, jeder Score-Posten —
+wird mit einem zweiten Aufruf ausgegeben:
+
+```bash
+psql -h /tmp -p 55433 -U crm -d leaddemo -f 03_ergebnis.sql
+```
+
 ## Die Daten
 
 **Alles erfunden.** Keine realen Organisationen, keine realen Personen, keine
