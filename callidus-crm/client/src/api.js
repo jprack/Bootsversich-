@@ -1,7 +1,10 @@
 // Zentraler Zugriff auf das Backend. Ersetzt das frühere window.storage.*
 // der Artefakt-Version — die UI ruft nur noch diese Funktionen auf und weiß
 // nichts von HTTP.
-const BASE = "http://localhost:3001/api";
+// Backend-Host aus der aufgerufenen Adresse ableiten, nicht "localhost"
+// festschreiben: ruft das Handy die App unter http://192.168.x.y:5173 auf,
+// wäre "localhost" das Handy selbst und jeder Datenzugriff liefe ins Leere.
+const BASE = `http://${window.location.hostname}:3001/api`;
 
 async function anfrage(pfad, optionen = {}) {
   const antwort = await fetch(`${BASE}${pfad}`, {

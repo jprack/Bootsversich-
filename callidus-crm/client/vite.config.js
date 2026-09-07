@@ -6,5 +6,8 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    // CRM_HOST=0.0.0.0 (via "npm run dev:lan") macht den Dev-Server im
+    // lokalen Netz sichtbar, sonst bleibt er auf dem eigenen Rechner.
+    host: process.env.CRM_HOST || "127.0.0.1",
   },
 });

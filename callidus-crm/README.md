@@ -41,6 +41,40 @@ Startet Backend und Frontend gemeinsam. Danach im Browser öffnen:
 
 Beenden mit `Strg + C` im Terminal.
 
+## Am Handy testen (gleiches WLAN)
+
+Die App läuft normalerweise nur auf dem PC selbst. Zum Testen am Handy gibt
+es einen zweiten Startbefehl, der sie zusätzlich im lokalen Netz sichtbar
+macht:
+
+```
+npm run dev:lan
+```
+
+Dann:
+
+1. **IP des PCs herausfinden** — Eingabeaufforderung öffnen, `ipconfig`
+   eingeben, bei „IPv4-Adresse" ablesen (z. B. `192.168.0.42`).
+   Vite gibt die Adresse beim Start auch selbst aus, in der Zeile
+   `➜ Network:`.
+2. **Windows-Firewall**: Beim ersten Start fragt Windows, ob Node.js im
+   Netzwerk kommunizieren darf. **Erlauben** — und zwar für *private*
+   Netzwerke. Ohne diese Freigabe ist der PC vom Handy aus nicht erreichbar.
+3. **Handy ins selbe WLAN** (nicht Mobilfunk!) und im Browser aufrufen:
+   `http://192.168.0.42:5173` — mit deiner eigenen IP von Schritt 1.
+
+### Was dabei zu beachten ist
+
+- **Es gibt keine Anmeldung.** Solange `dev:lan` läuft, kann jedes Gerät im
+  selben WLAN die Kundendaten sehen und ändern. Zu Hause ist das in Ordnung.
+  In einem Hotel-, Hafen- oder Café-WLAN nicht — dort besser den normalen
+  `npm run dev` nutzen, der nur den eigenen Rechner bedient.
+- **Der normale `npm run dev` bleibt unverändert** auf den eigenen Rechner
+  beschränkt. Der Netzbetrieb ist eine bewusste Ausnahme, kein Standard.
+- **Nur zum Ansehen und Ausprobieren gedacht.** Die Datenbank liegt weiter
+  auf dem PC; das Handy ist nur ein Fenster darauf. Läuft der PC nicht,
+  läuft die App nicht.
+
 ## Wo die Daten liegen — wichtig fürs Backup
 
 | Was | Ort |

@@ -7,11 +7,28 @@ import partnersRouter from "./routes/partners.js";
 import vertraegeRouter, { vertragRouter } from "./routes/vertraege.js";
 
 const PORT = 3001;
-const CLIENT_ORIGIN = "http://localhost:5173";
+
+// Standard ist 127.0.0.1: der Server ist dann nur vom eigenen Rechner aus
+// erreichbar. "npm run dev:lan" setzt CRM_HOST=0.0.0.0 und macht ihn im
+// lokalen Netz sichtbar — gedacht zum Testen am Handy, siehe README.
+const HOST = process.env.CRM_HOST || "127.0.0.1";
+const IM_NETZ = HOST === "0.0.0.0";
 
 const app = express();
 
-app.use(cors({ origin: CLIENT_ORIGIN }));
+// Im Netzbetrieb ruft das Handy die App unter der IP des PCs auf, die wir
+// vorher nicht kennen — deshalb wird jede Herkunft auf dem Vite-Port 5173
+// akzeptiert. Ohne Netzbetrieb bleibt es bei localhost.
+app.use(cors({
+  origin: (herkunft, cb) => {
+    if (!herkunft) return cb(null, true);                 // curl, gleiche Herkunft
+    if (herkunft === "http://localhost:5173") return cb(null, true);
+    if (IM_NETZ && /^http:\/\/[\w.-]+:5173$/.test(herkunft)) return cb(null, true);
+    const fehler = new Error(`Herkunft nicht erlaubt: ${herkunft}`);
+    fehler.status = 403;
+    cb(fehler);
+  },
+}));
 app.use(express.json({ limit: "5mb" }));
 
 app.get("/api/health", (req, res) => {
@@ -41,6 +58,11 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
+  // Abgelehnte Herkunft ist eine Entscheidung, kein Serverfehler.
+  if (err.status === 403) {
+    console.warn("[cors]", err.message);
+    return res.status(403).json({ fehler: err.message });
+  }
   // Verletzte Fremdschlüssel sind ein Eingabefehler des Aufrufers (etwa eine
   // partner_id, die es nicht gibt) — nicht ein Serverfehler.
   if (String(err.code).startsWith("SQLITE_CONSTRAINT")) {
@@ -51,8 +73,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ fehler: err.message });
 });
 
-app.listen(PORT, () => {
-  console.log(`[server] http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`[server] http://localhost:${PORT}${IM_NETZ ? " (auch im lokalen Netz)" : ""}`);
   console.log(`[server] Datenbank: ${DB_PATH}`);
   console.log(`[server] Uploads:   ${UPLOADS_DIR}`);
 });
