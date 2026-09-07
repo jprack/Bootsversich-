@@ -13,6 +13,8 @@ import VertragCard, { vertragTotal } from "./VertragCard.jsx";
 import AntragCard from "./AntragCard.jsx";
 import PolizzeErfassenForm from "./PolizzeErfassenForm.jsx";
 import VergleichPanel from "./VergleichPanel.jsx";
+import HistorieList from "./HistorieList.jsx";
+import DokumenteTab from "./DokumenteTab.jsx";
 import NautimaAntragTab from "../rechner/NautimaAntragTab.jsx";
 import CallidusDatenblattTab from "../rechner/CallidusDatenblattTab.jsx";
 import { generateAntragAnschreiben, generatePolizzeMail, generateKuendigungsschreiben } from "./textbausteine.js";
@@ -21,7 +23,7 @@ import { euro } from "../../lib/format.js";
 
 export default function CustomerDetail({
   customer, onBack, onEdit, onDelete, onStatusChange, partners,
-  onSaveBoat, onDeleteBoat, onAddVertrag, onCustomersChanged,
+  onSaveBoat, onDeleteBoat, onAddVertrag, onAddHistorie, onCustomersChanged,
 }) {
   const [subTab, setSubTab] = useState("uebersicht"); // uebersicht | boote | historie | dokumente
   const [boatView, setBoatView] = useState({ mode: "list" }); // list | form
@@ -141,7 +143,7 @@ export default function CustomerDetail({
           <Ship size={13} /> Boote{boats.length > 0 ? ` (${boats.length})` : ""}
         </button>
         <button className={subTab === "historie" ? "subtab subtab--active" : "subtab"} onClick={() => setSubTab("historie")}>
-          <Calendar size={13} /> Historie
+          <Calendar size={13} /> Historie{customer.historie?.length > 0 ? ` (${customer.historie.length})` : ""}
         </button>
         <button className={subTab === "dokumente" ? "subtab subtab--active" : "subtab"} onClick={() => setSubTab("dokumente")}>
           <FileText size={13} /> Dokumente
@@ -288,11 +290,11 @@ export default function CustomerDetail({
       )}
 
       {subTab === "historie" && (
-        <p className="empty-hint">Der Kontaktverlauf kommt mit Prompt 8 (Tabelle <code>historie</code> steht bereits).</p>
+        <HistorieList customer={customer} onAdd={(typ, text) => onAddHistorie(customer, typ, text)} />
       )}
 
       {subTab === "dokumente" && (
-        <p className="empty-hint">Die Dokumentenablage kommt mit Prompt 8 (Tabelle <code>documents</code> und der Ordner <code>server/uploads/</code> stehen bereits).</p>
+        <DokumenteTab customer={customer} onCustomersChanged={onCustomersChanged} />
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import express from "express";
 import { randomUUID } from "node:crypto";
 import db from "../db.js";
 import { antraegeVonKunde } from "../lib/antraege.js";
+import { eintragAnlegen } from "../lib/historie.js";
 
 const router = express.Router();
 
@@ -20,8 +21,16 @@ router.post("/:id/antraege", (req, res) => {
   if (req.body?.daten === undefined) return res.status(400).json({ fehler: "daten sind erforderlich" });
 
   const antragId = randomUUID();
-  db.prepare("INSERT INTO antraege (id, customer_id, typ, daten) VALUES (?, ?, ?, ?)")
-    .run(antragId, id, typ, JSON.stringify(req.body.daten));
+  db.prepare("INSERT INTO antraege (id, customer_id, erstellt, typ, daten) VALUES (?, ?, ?, ?, ?)")
+    .run(antragId, id, new Date().toISOString(), typ, JSON.stringify(req.body.daten));
+
+  // Wie in BootsCRM_reference.jsx: "NAUTIMA-Antrag erstellt (… €/Jahr)".
+  // Die Summe liefert die Maske mit, der Server kennt sie nicht.
+  const summe = Number(req.body?.gesamt);
+  const betrag = Number.isFinite(summe)
+    ? ` (${summe.toLocaleString("de-AT", { style: "currency", currency: "EUR" })}/Jahr)`
+    : "";
+  eintragAnlegen(id, "Sonstiges", `${typ} erstellt${betrag}`, true);
 
   res.status(201).json(antraegeVonKunde(id).find((a) => a.id === antragId));
 });

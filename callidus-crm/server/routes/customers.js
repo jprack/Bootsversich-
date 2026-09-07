@@ -5,6 +5,14 @@ import { KUNDEN_FELDER, BOOT_FELDER, nurErlaubte } from "../lib/felder.js";
 import { insert, update } from "../lib/sql.js";
 import { alleKundenMitBooten, kundeMitBooten } from "../lib/kunden.js";
 import { createOffertTasks, createKuendigungsTasks, clearKuendigungsTasks } from "../lib/tasks-logic.js";
+import { eintragAnlegen } from "../lib/historie.js";
+import fs from "node:fs";
+import path from "node:path";
+import { UPLOADS_DIR } from "../db.js";
+
+// Aus BootsCRM_reference.jsx (STATUS_OPTIONS) — nur für den Protokolltext.
+const STATUS_LABEL = { offert: "Offert", antrag: "Antrag", polizze: "Polizze" };
+const statusText = (s) => STATUS_LABEL[s] || "kein Status";
 
 const router = express.Router();
 
@@ -50,6 +58,12 @@ const kundeAktualisieren = db.transaction((id, daten, vorher) => {
   update(db, "customers", id, daten, "updated_at = datetime('now')");
   const kunde = db.prepare("SELECT * FROM customers WHERE id = ?").get(id);
 
+  // Statuswechsel im Kontaktverlauf festhalten — in der Referenz machte das
+  // changeStatus im Browser, jetzt passiert es dort, wo der Wechsel stattfindet.
+  if (kunde.status !== vorher.status) {
+    eintragAnlegen(id, "Sonstiges", `Status geändert: ${statusText(vorher.status)} → ${statusText(kunde.status)}`, true);
+  }
+
   // Nachfassen: nur beim Wechsel auf "offert", nicht bei jedem Speichern.
   if (kunde.status === "offert" && vorher.status !== "offert") {
     createOffertTasks(kunde);
@@ -88,6 +102,16 @@ router.delete("/:id", (req, res) => {
   if (ergebnis.changes === 0) {
     return res.status(404).json({ fehler: `Kunde ${req.params.id} nicht gefunden` });
   }
+
+  // ON DELETE CASCADE räumt die Datenbankzeilen ab, die hochgeladenen Dateien
+  // liegen aber auf der Festplatte — die bleiben sonst als Datenrest zurück.
+  const ordner = path.join(UPLOADS_DIR, req.params.id);
+  try {
+    if (fs.existsSync(ordner)) fs.rmSync(ordner, { recursive: true, force: true });
+  } catch (e) {
+    console.error("[documents] Upload-Ordner konnte nicht gelöscht werden:", e.message);
+  }
+
   res.json({ geloescht: true, id: req.params.id });
 });
 

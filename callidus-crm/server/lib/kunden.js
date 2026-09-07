@@ -1,6 +1,7 @@
 import db from "../db.js";
 import { vertraegeNachKunde, vertraegeVonKunde } from "./vertraege.js";
 import { antraegeNachKunde, antraegeVonKunde } from "./antraege.js";
+import { historieNachKunde, historieVonKunde } from "./historie.js";
 
 // Deutsche Sortierung. SQLite kennt ohne ICU-Erweiterung keine Locale-Regeln
 // und würde "Öhlinger" hinter "Zauner" einsortieren. Deshalb sortieren wir
@@ -21,6 +22,7 @@ export function kundeMitBooten(id) {
   kunde.boote = db.prepare("SELECT * FROM boats WHERE customer_id = ? ORDER BY name").all(id);
   kunde.vertraege = vertraegeVonKunde(id);
   kunde.antraege = antraegeVonKunde(id);
+  kunde.historie = historieVonKunde(id);
   kunde.quotes = db.prepare("SELECT * FROM quotes WHERE customer_id = ? ORDER BY erstellt DESC, rowid DESC").all(id);
   return kunde;
 }
@@ -40,6 +42,7 @@ export function alleKundenMitBooten() {
 
   const vertraege = vertraegeNachKunde();
   const antraege = antraegeNachKunde();
+  const historie = historieNachKunde();
   const quotes = new Map();
   for (const q of db.prepare("SELECT * FROM quotes ORDER BY erstellt DESC, rowid DESC").all()) {
     if (!quotes.has(q.customer_id)) quotes.set(q.customer_id, []);
@@ -49,6 +52,7 @@ export function alleKundenMitBooten() {
     kunde.boote = nachKunde.get(kunde.id) ?? [];
     kunde.vertraege = vertraege.get(kunde.id) ?? [];
     kunde.antraege = antraege.get(kunde.id) ?? [];
+    kunde.historie = historie.get(kunde.id) ?? [];
     kunde.quotes = quotes.get(kunde.id) ?? [];
   }
 

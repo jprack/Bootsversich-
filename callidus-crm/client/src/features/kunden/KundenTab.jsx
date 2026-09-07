@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Anchor, Loader2, ChevronRight } from "lucide-react";
+import { Search, Plus, Anchor, Loader2, ChevronRight, Check } from "lucide-react";
 import api from "../../api.js";
 import CustomerForm from "./CustomerForm.jsx";
 import CustomerDetail from "./CustomerDetail.jsx";
 import StatusBadge from "./StatusBadge.jsx";
+import ZielTracker, { QuickLeadForm } from "./ZielTracker.jsx";
 import { fullName, boatsSubtitle, STATUS_OPTIONS } from "./helpers.js";
 
 // Aus BootsCRM_reference.jsx. Die Ladelogik ist der eigentliche Umbau:
@@ -18,6 +19,8 @@ export default function KundenTab({ partners }) {
   const [view, setView] = useState({ mode: "list" }); // list | form | detail
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("alle"); // alle | kein | offert | antrag | polizze
+  const [showQuickLead, setShowQuickLead] = useState(false);
+  const [quickLeadMsg, setQuickLeadMsg] = useState("");
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
@@ -63,6 +66,20 @@ export default function KundenTab({ partners }) {
     await loadCustomers();
   };
 
+  // Aus BootsCRM_reference.jsx (saveQuickLead) — die id vergibt der Server.
+  const saveQuickLead = async (data) => {
+    const angelegt = await api.customers.save(data);
+    await loadCustomers();
+    setShowQuickLead(false);
+    setQuickLeadMsg(`„${fullName(angelegt)}" als Lead erfasst.`);
+    setTimeout(() => setQuickLeadMsg(""), 3000);
+  };
+
+  const addHistorie = async (customer, typ, text) => {
+    await api.customers.addHistorie(customer.id, { typ, text });
+    await loadCustomers();
+  };
+
   // Der Server setzt den Status in derselben Transaktion auf "polizze".
   const addVertrag = async (customer, vertrag) => {
     await api.customers.addVertrag(customer.id, vertrag);
@@ -100,6 +117,7 @@ export default function KundenTab({ partners }) {
         onSaveBoat={saveBoat}
         onDeleteBoat={deleteBoat}
         onAddVertrag={addVertrag}
+        onAddHistorie={addHistorie}
         onCustomersChanged={loadCustomers}
       />
     );
@@ -107,6 +125,7 @@ export default function KundenTab({ partners }) {
 
   return (
     <div className="panel">
+      <ZielTracker customers={customers} />
       <div className="pipeline-bar">
         {[
           { key: "alle", label: "Alle", count: customers.length },
@@ -133,10 +152,13 @@ export default function KundenTab({ partners }) {
           <Search size={15} />
           <input placeholder="Kunde oder Boot suchen…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <button className="btn" onClick={() => setShowQuickLead((s) => !s)}><Plus size={15} /> Schnell-Lead</button>
         <button className="btn btn--primary" onClick={() => setView({ mode: "form" })}>
           <Plus size={15} /> Neuer Kunde
         </button>
       </div>
+      {quickLeadMsg && <div className="save-confirm" style={{ marginBottom: 12 }}><Check size={14} /> {quickLeadMsg}</div>}
+      {showQuickLead && <QuickLeadForm onCancel={() => setShowQuickLead(false)} onSave={saveQuickLead} />}
 
       {fehler && <div className="warnbox">Keine Verbindung zum Backend: {fehler}</div>}
 

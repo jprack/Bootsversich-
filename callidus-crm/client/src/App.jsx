@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Anchor, Info, Calculator, Check } from "lucide-react";
+import { Users, Anchor, Info, Calculator, Check, Mail, FileCheck2, FileText } from "lucide-react";
 import api from "./api.js";
 import KundenTab from "./features/kunden/KundenTab.jsx";
 import PartnerTab from "./features/partner/PartnerTab.jsx";
 import RechnerTab from "./features/rechner/RechnerTab.jsx";
 import AufgabenTab from "./features/aufgaben/AufgabenTab.jsx";
+import NewsletterTab from "./features/newsletter/NewsletterTab.jsx";
+import ImportTab from "./features/import/ImportTab.jsx";
+import NautimaAntragTab from "./features/rechner/NautimaAntragTab.jsx";
+import CallidusDatenblattTab from "./features/rechner/CallidusDatenblattTab.jsx";
 
 // App-Shell aus BootsCRM_reference.jsx. Die Tabs Newsletter, Aufgaben,
 // Import, NAUTIMA-Antrag und Bootsdatenblatt folgen in den nächsten Schritten.
@@ -59,12 +63,24 @@ export default function App() {
           <button className={tab === "partner" ? "tab tab--active" : "tab"} onClick={() => setTab("partner")}>
             <Users size={15} /> Partner
           </button>
+          <button className={tab === "newsletter" ? "tab tab--active" : "tab"} onClick={() => setTab("newsletter")}>
+            <Mail size={15} /> Newsletter
+          </button>
+          <button className={tab === "import" ? "tab tab--active" : "tab"} onClick={() => setTab("import")}>
+            <Mail size={15} /> Import
+          </button>
           <button className={tab === "rechner" ? "tab tab--active" : "tab"} onClick={() => setTab("rechner")}>
             <Calculator size={15} /> Prämienrechner
           </button>
           <button className={tab === "aufgaben" ? "tab tab--active" : "tab"} onClick={() => setTab("aufgaben")}>
             <Check size={15} /> Aufgaben
             {dueTaskCount > 0 && <span className="tab-badge">{dueTaskCount}</span>}
+          </button>
+          <button className={tab === "nautima" ? "tab tab--active" : "tab"} onClick={() => setTab("nautima")}>
+            <FileCheck2 size={15} /> NAUTIMA-Antrag
+          </button>
+          <button className={tab === "bootsdatenblatt" ? "tab tab--active" : "tab"} onClick={() => setTab("bootsdatenblatt")}>
+            <FileText size={15} /> Bootsdatenblatt
           </button>
         </nav>
       </header>
@@ -82,6 +98,10 @@ export default function App() {
         {tab === "partner" && <PartnerTab customers={customers} onPartnersChanged={refreshPartners} />}
         {tab === "rechner" && <RechnerTab customers={customers} onSaveToCustomer={saveQuoteToCustomer} onCustomersChanged={refreshCustomers} />}
         {tab === "aufgaben" && <AufgabenTab customers={customers} onTasksChanged={refreshTaskCount} />}
+        {tab === "newsletter" && <NewsletterTab customers={customers} partners={partners} />}
+        {tab === "import" && <ImportTab onCustomersChanged={refreshCustomers} />}
+        {tab === "nautima" && <NautimaAntragTab customers={customers} onCustomersChanged={refreshCustomers} />}
+        {tab === "bootsdatenblatt" && <CallidusDatenblattTab customers={customers} onCustomersChanged={refreshCustomers} />}
       </main>
     </div>
   );

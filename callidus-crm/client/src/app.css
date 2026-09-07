@@ -303,3 +303,58 @@ body { margin: 0; }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .hint-text { text-align: center; font-size: 12px; color: var(--ink-soft); margin: -6px 0 0; }
 .hint-text--ok { color: var(--sea); font-weight: 600; }
+
+/* --- Historie, Dokumente, Newsletter, Import, Wochenziel
+   (Prompt 8 und 9), verbatim aus dem CSS-Block der Referenz --- */
+.ziel-panel { background: var(--ink); border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; color: #fff; }
+.ziel-row { display: flex; gap: 28px; flex-wrap: wrap; }
+.ziel-goal { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 6px; }
+.ziel-goal-head { display: flex; justify-content: space-between; align-items: center; }
+.ziel-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: rgba(255,255,255,0.65); }
+.ziel-edit-link { background: none; border: none; color: rgba(255,255,255,0.65); font-size: 11px; text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
+.ziel-edit { display: flex; gap: 6px; align-items: center; }
+.ziel-edit input { border-radius: 6px; border: none; padding: 4px 6px; font: inherit; }
+.ziel-progress-row { display: flex; align-items: center; gap: 10px; }
+.ziel-count { font-family: "SF Mono", "Roboto Mono", Consolas, monospace; font-size: 24px; font-weight: 800; color: #fff; white-space: nowrap; }
+.ziel-progress-track { flex: 1; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.18); overflow: hidden; }
+.ziel-progress-fill { display: block; height: 100%; background: #0F6EBE; border-radius: 999px; transition: width 0.3s; }
+.ziel-check { color: #6FE3A6; flex-shrink: 0; }
+.ziel-hint { font-size: 11px; color: rgba(255,255,255,0.55); }
+.ziel-funnel { flex: 1.4; min-width: 280px; display: flex; flex-direction: column; gap: 8px; }
+.funnel-row { display: flex; align-items: center; gap: 6px; }
+.funnel-stage { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.08); border: 1.5px solid var(--stage-color); flex: 1; }
+.funnel-count { font-family: "SF Mono", "Roboto Mono", Consolas, monospace; font-size: 18px; font-weight: 800; color: #fff; }
+.funnel-name { font-size: 10px; color: rgba(255,255,255,0.65); font-weight: 600; }
+.funnel-arrow { display: flex; flex-direction: column; align-items: center; font-size: 13px; color: rgba(255,255,255,0.4); flex-shrink: 0; }
+.funnel-rate { font-size: 10px; color: #8FC3EA; font-weight: 700; }
+.quicklead-form { background: var(--paper); border: 1.5px dashed var(--brass); margin-bottom: 16px; padding: 14px 16px; }
+.quicklead-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.quicklead-row input, .quicklead-row select { flex: 1; min-width: 140px; font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); }
+.historie-form { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.historie-form select { flex-shrink: 0; width: 110px; font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+.historie-form input { flex: 1; min-width: 200px; font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+.historie-list { display: flex; flex-direction: column; gap: 2px; }
+.historie-item { display: flex; gap: 10px; padding: 10px 4px; border-bottom: 1px dashed var(--line); }
+.historie-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--paper); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; color: var(--sea); margin-top: 1px; }
+.historie-item--system .historie-icon { color: var(--ink-soft); }
+.historie-body { flex: 1; min-width: 0; }
+.historie-meta { display: flex; gap: 8px; align-items: baseline; }
+.historie-typ { font-size: 11.5px; font-weight: 700; color: var(--ink); }
+.historie-datum { font-size: 10.5px; color: var(--ink-soft); }
+.historie-text { font-size: 13px; color: var(--ink); margin: 2px 0 0; line-height: 1.4; }
+.dropzone { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 24px; text-align: center; color: var(--ink-soft); cursor: pointer; font-size: 13px; margin-top: 6px; }
+.dropzone:hover { border-color: var(--brass); color: var(--brass-dark); }
+.dropzone-hint { font-size: 11px; }
+.dropzone-extract-hint { display: flex; gap: 6px; font-size: 11.5px; color: var(--ink-soft); margin: 6px 0 0; line-height: 1.4; }
+.newsletter-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.newsletter-preview { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.newsletter-preview-subject { background: var(--ink); color: var(--paper); font-weight: 700; padding: 10px 14px; font-size: 13px; }
+.newsletter-preview-body { padding: 14px; font-size: 13px; white-space: pre-wrap; line-height: 1.5; background: var(--paper-raised); }
+.doc-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.doc-row { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
+.doc-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.doc-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-meta { font-size: 11px; color: var(--ink-soft); }
+.import-review { border-top: 1px dashed var(--line); margin-top: 16px; padding-top: 4px; }
+.import-batch-head { display: flex; justify-content: space-between; align-items: center; }
+.import-item { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-top: 10px; background: var(--paper); }

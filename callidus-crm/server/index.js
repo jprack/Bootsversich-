@@ -7,6 +7,9 @@ import partnersRouter from "./routes/partners.js";
 import vertraegeRouter, { vertragRouter } from "./routes/vertraege.js";
 import tasksRouter from "./routes/tasks.js";
 import antraegeRouter from "./routes/antraege.js";
+import historieRouter from "./routes/historie.js";
+import documentsRouter, { dokumentRouter } from "./routes/documents.js";
+import settingsRouter from "./routes/settings.js";
 import { pruefeGeburtstage } from "./lib/tasks-logic.js";
 
 const PORT = 3001;
@@ -52,11 +55,12 @@ app.use("/api/partners", partnersRouter);
 // der Kunden-Router hat für diese Pfade keine Route und reicht durch.
 app.use("/api/customers", vertraegeRouter);
 app.use("/api/customers", antraegeRouter);
+app.use("/api/customers", historieRouter);
+app.use("/api/customers", documentsRouter);
+app.use("/api/documents", dokumentRouter);
 app.use("/api/vertraege", vertragRouter);
 app.use("/api/tasks", tasksRouter);
-
-// Weitere Bereiche (historie, documents, settings)
-// werden hier in den folgenden Schritten eingehängt.
+app.use("/api/settings", settingsRouter);
 
 app.use((req, res) => {
   res.status(404).json({ fehler: `Unbekannte Route: ${req.method} ${req.originalUrl}` });

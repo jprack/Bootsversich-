@@ -5,6 +5,7 @@ import { VERTRAG_FELDER, SPARTE_FELDER, QUOTE_FELDER, nurErlaubte } from "../lib
 import { insert } from "../lib/sql.js";
 import { kundeMitBooten } from "../lib/kunden.js";
 import { createEmpfehlungsTask } from "../lib/tasks-logic.js";
+import { eintragAnlegen } from "../lib/historie.js";
 
 const router = express.Router();
 
@@ -16,7 +17,10 @@ const polizzeAnlegen = db.transaction((customerId, vertrag, sparten) => {
   const erstePolizze = db.prepare("SELECT COUNT(*) AS n FROM vertraege WHERE customer_id = ?").get(customerId).n === 0;
 
   const vertragId = randomUUID();
-  insert(db, "vertraege", { id: vertragId, customer_id: customerId, ...vertrag });
+  // erstellt ausdrücklich als ISO, nicht über den Spalten-Default
+  // datetime('now'): dessen Format "2026-09-07 13:15:46" liest new Date()
+  // als Ortszeit. Die Wochenziel-Auswertung vergleicht damit.
+  insert(db, "vertraege", { id: vertragId, customer_id: customerId, erstellt: new Date().toISOString(), ...vertrag });
 
   for (const sparte of sparten) {
     insert(db, "sparten", { id: randomUUID(), vertrag_id: vertragId, ...sparte });
@@ -24,6 +28,10 @@ const polizzeAnlegen = db.transaction((customerId, vertrag, sparten) => {
 
   db.prepare("UPDATE customers SET status = 'polizze', updated_at = datetime('now') WHERE id = ?")
     .run(customerId);
+
+  const spartenText = sparten.map((s) => s.sparte).join(", ");
+  eintragAnlegen(customerId, "Sonstiges",
+    `Polizze erfasst: ${vertrag.versicherer}${spartenText ? ` (${spartenText})` : ""}`, true);
 
   // Nach der ersten Polizze nach einer Empfehlung fragen — 30 Kalendertage
   // später, wie in BootsCRM_reference.jsx.
@@ -82,7 +90,7 @@ router.post("/:id/quotes", (req, res) => {
     return res.status(404).json({ fehler: `Kunde ${id} nicht gefunden` });
   }
   const quoteId = randomUUID();
-  insert(db, "quotes", { id: quoteId, customer_id: id, ...nurErlaubte(req.body ?? {}, QUOTE_FELDER) });
+  insert(db, "quotes", { id: quoteId, customer_id: id, erstellt: new Date().toISOString(), ...nurErlaubte(req.body ?? {}, QUOTE_FELDER) });
   res.status(201).json(db.prepare("SELECT * FROM quotes WHERE id = ?").get(quoteId));
 });
 

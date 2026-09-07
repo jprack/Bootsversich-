@@ -66,6 +66,28 @@ export const api = {
     saveAntrag: (customerId, antrag) => anfrage(`/customers/${customerId}/antraege`, json("POST", antrag)),
     antraege: (customerId) => anfrage(`/customers/${customerId}/antraege`),
 
+    // Kontaktverlauf
+    historie: (customerId) => anfrage(`/customers/${customerId}/historie`),
+    addHistorie: (customerId, eintrag) => anfrage(`/customers/${customerId}/historie`, json("POST", eintrag)),
+
+    // Dokumente: echte Dateien, deshalb FormData statt JSON — der Browser
+    // setzt den multipart-Header selbst, ein eigener Content-Type würde die
+    // Grenzmarkierung zerstören.
+    documents: (customerId) => anfrage(`/customers/${customerId}/documents`),
+    uploadDocuments: async (customerId, dateien) => {
+      const daten = new FormData();
+      for (const d of dateien) daten.append("dateien", d);
+      const antwort = await fetch(`${BASE}/customers/${customerId}/documents`, { method: "POST", body: daten });
+      if (!antwort.ok) {
+        let meldung = `${antwort.status} ${antwort.statusText}`;
+        try { const i = await antwort.json(); if (i?.fehler) meldung = i.fehler; } catch { /* kein JSON */ }
+        throw new Error(meldung);
+      }
+      return antwort.json();
+    },
+    documentUrl: (id) => `${BASE}/documents/${id}/download`,
+    deleteDocument: (id) => anfrage(`/documents/${id}`, { method: "DELETE" }),
+
     addBoat: (customerId, boat) => anfrage(`/customers/${customerId}/boats`, json("POST", boat)),
     updateBoat: (boat) => anfrage(`/boats/${boat.id}`, json("PUT", boat)),
     deleteBoat: (id) => anfrage(`/boats/${id}`, { method: "DELETE" }),
@@ -84,6 +106,16 @@ export const api = {
         : anfrage("/partners", json("POST", data)),
 
     delete: (id) => anfrage(`/partners/${id}`, { method: "DELETE" }),
+  },
+
+  settings: {
+    // Nicht gesetzte Schlüssel liefern 404 — der Aufrufer entscheidet über
+    // den Standardwert, statt dass die API einen erfindet.
+    get: async (key, standard = null) => {
+      try { return (await anfrage(`/settings/${key}`)).value; }
+      catch { return standard; }
+    },
+    set: (key, value) => anfrage(`/settings/${key}`, json("PUT", { value })),
   },
 
   tasks: {

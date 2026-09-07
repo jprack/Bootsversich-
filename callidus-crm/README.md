@@ -97,23 +97,32 @@ Schema steht in `server/schema.sql`.
 
 ## Stand
 
-Der Fahrplan steht in `PROMPTS.md` (9 Schritte). Erledigt sind:
+Alle neun Schritte aus `PROMPTS.md` sind umgesetzt:
 
-| Schritt | Inhalt | |
-|---|---|---|
-| 1 | Projekt-Grundgerüst, Health-Check | fertig |
-| 2 | Backend Kunden & Boote, `api.js` | fertig |
-| 3 | Frontend Kunden-Tab portiert | fertig |
-| 4 | Partner (Backend + Frontend) | fertig |
-| 5 | Polizzen & Prämienrechner | fertig |
-| 6 | Aufgaben (automatische Erinnerungen) | fertig |
-| 7 | Nächster-Schritt-Bereich, Vergleich, Textbausteine | fertig |
-| 8 | Historie, Dokumente, Newsletter, Import | offen |
-| 9 | Wochenziel, Pipeline-Übersicht, `start-crm.bat` | offen |
+| Schritt | Inhalt |
+|---|---|
+| 1 | Projekt-Grundgerüst, Health-Check |
+| 2 | Backend Kunden & Boote, `api.js` |
+| 3 | Frontend Kunden-Tab |
+| 4 | Partner |
+| 5 | Polizzen & Prämienrechner |
+| 6 | Aufgaben (automatische Erinnerungen) |
+| 7 | Nächster-Schritt-Bereich, Vergleich, Antragsmasken |
+| 8 | Historie, Dokumente, Newsletter, Import |
+| 9 | Wochenziel, Pipeline-Trichter, `start-crm.bat` |
 
-Zum Weiterarbeiten in einer neuen Sitzung genügt:
-„Lies ARCHITECTURE.md und PROMPTS.md, wir sind bei Prompt 8."
+Acht Tabs wie in der Vorlage: Kunden, Partner, Newsletter, Import,
+Prämienrechner, Aufgaben, NAUTIMA-Antrag, Bootsdatenblatt.
 
-Die Vorlage für alle noch offenen Teile ist `BootsCRM_reference.jsx` im
-Projekt-Root — die bisherige App, aus der portiert wird. Sie wird nicht
-ausgeführt, nur gelesen.
+Die Vorlage `BootsCRM_reference.jsx` liegt weiterhin im Projekt-Root. Sie
+wird nicht ausgeführt, dient aber als Nachschlagewerk — die meisten Teile
+wurden daraus ausgeschnitten statt neu geschrieben.
+
+### Was bewusst offen geblieben ist
+
+- **Kein Logo**: Im Kopf steht ein Anker-Symbol. Die Vorlage hatte das
+  Callidus-Logo als eingebettetes Bild; die Datei liegt hier nicht vor.
+- **Keine Anmeldung**: So vorgesehen in `ARCHITECTURE.md` — die App läuft
+  auf einem PC für eine Person. Für den Zugriff vom Handy siehe oben.
+- **Outlook und Brevo** bleiben außen vor: Die Textbausteine erzeugen Text
+  zum Kopieren, versendet wird über Claude im Chat.
