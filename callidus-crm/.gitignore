@@ -1,0 +1,19 @@
+# Abhängigkeiten
+node_modules/
+
+# Datenbank (enthält echte Kundendaten — gehört nicht ins Repository)
+server/callidus.db
+server/callidus.db-journal
+server/callidus.db-wal
+server/callidus.db-shm
+
+# Hochgeladene Dokumente (echte Kundendateien)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Zugangsdaten
+.env
+.env.local
+
+# Build-Ausgaben
+client/dist/
