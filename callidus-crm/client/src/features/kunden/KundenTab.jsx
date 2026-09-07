@@ -63,6 +63,12 @@ export default function KundenTab({ partners }) {
     await loadCustomers();
   };
 
+  // Der Server setzt den Status in derselben Transaktion auf "polizze".
+  const addVertrag = async (customer, vertrag) => {
+    await api.customers.addVertrag(customer.id, vertrag);
+    await loadCustomers();
+  };
+
   const filtered = customers.filter((c) =>
     (fullName(c).toLowerCase().includes(search.toLowerCase()) ||
       boatsSubtitle(c).toLowerCase().includes(search.toLowerCase())) &&
@@ -93,6 +99,7 @@ export default function KundenTab({ partners }) {
         partners={partners}
         onSaveBoat={saveBoat}
         onDeleteBoat={deleteBoat}
+        onAddVertrag={addVertrag}
       />
     );
   }

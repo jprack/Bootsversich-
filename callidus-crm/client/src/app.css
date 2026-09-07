@@ -152,3 +152,66 @@ body { margin: 0; }
   .customer-row-sub, .customer-row-name { overflow: hidden; text-overflow: ellipsis; }
   .panel { padding: 16px; }
 }
+
+/* --- Nachgezogen für Prämienrechner und Polizzen (Prompt 5),
+   verbatim aus dem CSS-Block von BootsCRM_reference.jsx. --- */
+.rechner-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 20px; align-items: start; }
+.segmented { display: flex; gap: 6px; margin-bottom: 16px; }
+.seg-btn { flex: 1; padding: 9px; border-radius: 9px; border: 1px solid var(--line); background: var(--paper); font-size: 13px; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
+.seg-btn--active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.checkbox-list { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; }
+.advanced { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.advanced summary { cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--sea); }
+.results { display: flex; flex-direction: column; gap: 16px; }
+.result-card { padding: 18px 20px; }
+.result-head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 10px; }
+.result-title { font-family: "Avenir Next LT Pro", "Avenir Next", Avenir, "Century Gothic", sans-serif; font-weight: 700; font-size: 17px; margin: 0; }
+.result-total { text-align: right; }
+.result-total-label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-soft); }
+.result-total-value { font-family: "SF Mono", "Roboto Mono", Consolas, monospace; font-size: 22px; font-weight: 700; color: var(--brass-dark); }
+.result-section { margin-top: 10px; }
+.result-section-title { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.leader-label { white-space: nowrap; }
+.leader-fill { flex: 1; border-bottom: 1px dotted var(--line); margin-bottom: 3px; }
+.warn-stack { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.note-line { display: flex; gap: 6px; font-size: 11.5px; color: var(--sea); background: rgba(28,107,95,0.08); border-radius: 7px; padding: 6px 9px; margin-bottom: 4px; line-height: 1.4; }
+.save-panel { padding: 16px 20px; }
+.save-row { display: flex; gap: 8px; }
+.save-row select { flex: 1; font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); }
+.insurer-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 7px; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.02em; white-space: nowrap; }
+.vertrag-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: var(--paper); }
+.vertrag-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.vertrag-head-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.vertrag-polnr { font-size: 11.5px; color: var(--ink-soft); font-family: "SF Mono", "Roboto Mono", Consolas, monospace; }
+.vertrag-total { font-family: "SF Mono", "Roboto Mono", Consolas, monospace; font-size: 15px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.vertrag-total-label { font-size: 10.5px; font-weight: 500; color: var(--ink-soft); font-family: inherit; }
+.vertrag-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11.5px; color: var(--ink-soft); margin-bottom: 8px; }
+.sparten-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.sparten-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); padding: 4px 8px 4px 0; border-bottom: 1px solid var(--line); }
+.sparten-table td { padding: 5px 8px 5px 0; border-bottom: 1px dashed var(--line); font-family: "SF Mono", "Roboto Mono", Consolas, monospace; }
+.sparten-table tbody tr:last-child td { border-bottom: none; }
+.sparten-polnr { color: var(--ink-soft); font-size: 10.5px; }
+.sparten-erst { color: var(--ink-soft); font-size: 10.5px; }
+.sparten-total-row td { border-top: 1.5px solid var(--ink); border-bottom: none !important; font-weight: 700; color: var(--ink); padding-top: 7px; }
+.vertrag-notes { font-size: 12px; color: var(--ink-soft); margin: 8px 0 0; }
+.vertrag-link { font-size: 11.5px; color: var(--sea); font-weight: 600; display: inline-block; margin-top: 6px; }
+.mini-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--sea); font-weight: 700; margin: 14px 0 8px; }
+.repeat-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.repeat-list input { font: inherit; font-size: 13px; padding: 7px 9px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); }
+.repeat-row { display: flex; gap: 6px; align-items: center; }
+.repeat-row input:nth-child(2) { flex: 1; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.repeat-list input, .import-textarea, .output-textarea, .search-box input {
+    font-size: 16px;
+  }
+.save-row { flex-wrap: wrap; }
+.save-row select { min-width: 100%; }
+.result-head { flex-wrap: wrap; gap: 8px; }
+.result-total { text-align: left; }
+.panel, .formpanel { padding: 16px; }
+.leader-row { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; padding: 3px 0; color: var(--ink-soft); }
+.leader-value { font-family: "SF Mono", "Roboto Mono", Consolas, monospace; white-space: nowrap; color: var(--ink); }
+.leader-value--neg { color: var(--sea); }
+.leader-row--strong { font-weight: 700; color: var(--ink); font-size: 13.5px; }
+.leader-row--strong .leader-value { font-size: 14.5px; }
+.vertraege-summary { font-size: 12px; color: var(--ink-soft); font-weight: 600; }

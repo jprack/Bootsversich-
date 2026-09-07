@@ -67,3 +67,35 @@ export const PARTNER_FELDER = [
   "adresse",
   "plz_ort",
 ];
+
+// Polizzen. id, customer_id und erstellt vergibt der Server.
+export const VERTRAG_FELDER = [
+  "versicherer",
+  "polizzennummer",
+  "versicherungsbeginn",
+  "hauptfaelligkeit",
+  "zahlweise",
+  "notizen",
+  "quelle",
+];
+
+// Sparten je Polizze. id und vertrag_id vergibt der Server.
+export const SPARTE_FELDER = [
+  "sparte",
+  "versicherungssumme",
+  "selbstbehalt",
+  "erstpraemie",
+  "folgepraemie",
+  "polizzennummer",
+];
+
+// Gespeicherte Prämienberechnungen aus dem Rechner.
+export const QUOTE_FELDER = [
+  "bootstyp",
+  "baujahr",
+  "versicherungssumme",
+  "zone",
+  "nautima",
+  "callidus",
+  "quelle",
+];

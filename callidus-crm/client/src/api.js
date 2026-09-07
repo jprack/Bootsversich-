@@ -47,6 +47,15 @@ export const api = {
 
     delete: (id) => anfrage(`/customers/${id}`, { method: "DELETE" }),
 
+    // Polizze mit Sparten. Der Server setzt den Kundenstatus in derselben
+    // Transaktion auf "polizze" und liefert den aktualisierten Kunden zurück.
+    addVertrag: (customerId, vertrag) => anfrage(`/customers/${customerId}/vertraege`, json("POST", vertrag)),
+    deleteVertrag: (id) => anfrage(`/vertraege/${id}`, { method: "DELETE" }),
+
+    // Prämienberechnung aus dem Rechner beim Kunden vermerken.
+    saveQuote: (customerId, quote) => anfrage(`/customers/${customerId}/quotes`, json("POST", quote)),
+    quotes: (customerId) => anfrage(`/customers/${customerId}/quotes`),
+
     addBoat: (customerId, boat) => anfrage(`/customers/${customerId}/boats`, json("POST", boat)),
     updateBoat: (boat) => anfrage(`/boats/${boat.id}`, json("PUT", boat)),
     deleteBoat: (id) => anfrage(`/boats/${id}`, { method: "DELETE" }),

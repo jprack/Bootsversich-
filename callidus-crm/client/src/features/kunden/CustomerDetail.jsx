@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { ChevronRight, Ship, FileText, Calendar, Plus, AlertTriangle } from "lucide-react";
+import { ChevronRight, Ship, FileText, Calendar, Plus, AlertTriangle, FileCheck2 } from "lucide-react";
 import BoatForm from "./BoatForm.jsx";
 import BoatCard from "./BoatCard.jsx";
+import VertragCard, { vertragTotal } from "./VertragCard.jsx";
+import PolizzeErfassenForm from "./PolizzeErfassenForm.jsx";
+import { euro } from "../../lib/format.js";
 import { fullName, boatsSubtitle, getBoats, berechneKuendigungsfrist, STATUS_OPTIONS } from "./helpers.js";
 
 // Grundgerüst aus BootsCRM_reference.jsx: Kopfbereich, Sub-Tab-Navigation und
@@ -9,10 +12,11 @@ import { fullName, boatsSubtitle, getBoats, berechneKuendigungsfrist, STATUS_OPT
 // (documents-/historie-Tabellen) und kommen in einem späteren Schritt — sie
 // sind hier bereits sichtbar, damit die Navigation vollständig ist.
 export default function CustomerDetail({
-  customer, onBack, onEdit, onDelete, onStatusChange, partners, onSaveBoat, onDeleteBoat,
+  customer, onBack, onEdit, onDelete, onStatusChange, partners, onSaveBoat, onDeleteBoat, onAddVertrag,
 }) {
   const [subTab, setSubTab] = useState("uebersicht"); // uebersicht | boote | historie | dokumente
   const [boatView, setBoatView] = useState({ mode: "list" }); // list | form
+  const [polizzeForm, setPolizzeForm] = useState(false);
 
   const boats = getBoats(customer);
 
@@ -26,6 +30,12 @@ export default function CustomerDetail({
   };
 
   const partner = (partners || []).find((p) => p.id === customer.partner_id);
+  const vertraege = customer.vertraege || [];
+
+  const savePolizze = async (vertrag) => {
+    await onAddVertrag(customer, vertrag);
+    setPolizzeForm(false);
+  };
 
   return (
     <div className="panel customer-detail">
@@ -104,6 +114,33 @@ export default function CustomerDetail({
           })()}
 
           {customer.notizen && <p className="detail-notes">{customer.notizen}</p>}
+
+          <div className="section-head-row">
+            <h3 className="panel-subtitle" style={{ margin: 0 }}><FileCheck2 size={15} /> Polizzen</h3>
+            {!polizzeForm && (
+              <button type="button" className="btn btn--sm" onClick={() => setPolizzeForm(true)}>
+                <Plus size={13} /> Polizze erfassen
+              </button>
+            )}
+          </div>
+
+          {/* In der Referenz wird dieses Formular aus dem "Nächster Schritt"-
+              Bereich geöffnet — den baut Prompt 7. Bis dahin dieser Knopf,
+              damit die Polizzenerfassung schon benutzbar ist. */}
+          {polizzeForm && <PolizzeErfassenForm onCancel={() => setPolizzeForm(false)} onSave={savePolizze} />}
+
+          {vertraege.length === 0 ? (
+            !polizzeForm && <p className="empty-hint">Noch keine Polizze erfasst.</p>
+          ) : (
+            <>
+              {vertraege.length > 1 && (
+                <p className="vertraege-summary">
+                  {vertraege.length} Verträge · {euro(vertraege.reduce((sum, v) => sum + vertragTotal(v), 0))} / Jahr gesamt
+                </p>
+              )}
+              {vertraege.map((v) => <VertragCard key={v.id} vertrag={v} />)}
+            </>
+          )}
         </>
       )}
 

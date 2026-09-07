@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Anchor, Info } from "lucide-react";
+import { Users, Anchor, Info, Calculator } from "lucide-react";
 import api from "./api.js";
 import KundenTab from "./features/kunden/KundenTab.jsx";
 import PartnerTab from "./features/partner/PartnerTab.jsx";
+import RechnerTab from "./features/rechner/RechnerTab.jsx";
 
-// App-Shell aus BootsCRM_reference.jsx. Die Tabs Prämienrechner, Newsletter,
-// Aufgaben, Import, NAUTIMA-Antrag und Bootsdatenblatt folgen in den nächsten
-// Schritten — hier sind zunächst Kunden und Partner eingehängt.
+// App-Shell aus BootsCRM_reference.jsx. Die Tabs Newsletter, Aufgaben,
+// Import, NAUTIMA-Antrag und Bootsdatenblatt folgen in den nächsten Schritten.
 export default function App() {
   const [tab, setTab] = useState("kunden");
   const [customers, setCustomers] = useState([]);
@@ -25,6 +25,12 @@ export default function App() {
   // Auswahlfeld.
   useEffect(() => { refreshCustomers(); refreshPartners(); }, [refreshCustomers, refreshPartners, tab]);
 
+  // Aus BootsCRM_reference.jsx (saveQuoteToCustomer), jetzt über die API.
+  const saveQuoteToCustomer = async (customerId, quote) => {
+    await api.customers.saveQuote(customerId, quote);
+    await refreshCustomers();
+  };
+
   return (
     <div className="app-root">
       <header className="app-header">
@@ -38,6 +44,9 @@ export default function App() {
           </button>
           <button className={tab === "partner" ? "tab tab--active" : "tab"} onClick={() => setTab("partner")}>
             <Users size={15} /> Partner
+          </button>
+          <button className={tab === "rechner" ? "tab tab--active" : "tab"} onClick={() => setTab("rechner")}>
+            <Calculator size={15} /> Prämienrechner
           </button>
         </nav>
       </header>
@@ -53,6 +62,7 @@ export default function App() {
       <main className="app-main">
         {tab === "kunden" && <KundenTab partners={partners} />}
         {tab === "partner" && <PartnerTab customers={customers} onPartnersChanged={refreshPartners} />}
+        {tab === "rechner" && <RechnerTab customers={customers} onSaveToCustomer={saveQuoteToCustomer} />}
       </main>
     </div>
   );

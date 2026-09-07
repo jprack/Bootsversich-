@@ -4,6 +4,7 @@ import { DB_PATH, UPLOADS_DIR, tabellen } from "./db.js";
 import customersRouter from "./routes/customers.js";
 import boatsRouter from "./routes/boats.js";
 import partnersRouter from "./routes/partners.js";
+import vertraegeRouter, { vertragRouter } from "./routes/vertraege.js";
 
 const PORT = 3001;
 const CLIENT_ORIGIN = "http://localhost:5173";
@@ -26,8 +27,13 @@ app.get("/api/health", (req, res) => {
 app.use("/api/customers", customersRouter);
 app.use("/api/boats", boatsRouter);
 app.use("/api/partners", partnersRouter);
+// Zweiter Router auf /api/customers: trägt die verschachtelten Ressourcen
+// (Polizzen, Prämienberechnungen). Express probiert die Router der Reihe nach,
+// der Kunden-Router hat für diese Pfade keine Route und reicht durch.
+app.use("/api/customers", vertraegeRouter);
+app.use("/api/vertraege", vertragRouter);
 
-// Weitere Bereiche (vertraege, tasks, historie, documents, settings)
+// Weitere Bereiche (tasks, historie, documents, settings)
 // werden hier in den folgenden Schritten eingehängt.
 
 app.use((req, res) => {

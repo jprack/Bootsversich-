@@ -1,4 +1,5 @@
 import db from "../db.js";
+import { vertraegeNachKunde, vertraegeVonKunde } from "./vertraege.js";
 
 // Deutsche Sortierung. SQLite kennt ohne ICU-Erweiterung keine Locale-Regeln
 // und würde "Öhlinger" hinter "Zauner" einsortieren. Deshalb sortieren wir
@@ -17,6 +18,7 @@ export function kundeMitBooten(id) {
   const kunde = db.prepare("SELECT * FROM customers WHERE id = ?").get(id);
   if (!kunde) return undefined;
   kunde.boote = db.prepare("SELECT * FROM boats WHERE customer_id = ? ORDER BY name").all(id);
+  kunde.vertraege = vertraegeVonKunde(id);
   return kunde;
 }
 
@@ -33,8 +35,10 @@ export function alleKundenMitBooten() {
     nachKunde.get(boot.customer_id).push(boot);
   }
 
+  const vertraege = vertraegeNachKunde();
   for (const kunde of kunden) {
     kunde.boote = nachKunde.get(kunde.id) ?? [];
+    kunde.vertraege = vertraege.get(kunde.id) ?? [];
   }
 
   return kunden.sort(nachNamen);
