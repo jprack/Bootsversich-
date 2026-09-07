@@ -106,13 +106,13 @@ Der Fahrplan steht in `PROMPTS.md` (9 Schritte). Erledigt sind:
 | 3 | Frontend Kunden-Tab portiert | fertig |
 | 4 | Partner (Backend + Frontend) | fertig |
 | 5 | Polizzen & Prämienrechner | fertig |
-| 6 | Aufgaben (automatische Erinnerungen) | offen |
+| 6 | Aufgaben (automatische Erinnerungen) | fertig |
 | 7 | Nächster-Schritt-Bereich, Vergleich, Textbausteine | offen |
 | 8 | Historie, Dokumente, Newsletter, Import | offen |
 | 9 | Wochenziel, Pipeline-Übersicht, `start-crm.bat` | offen |
 
 Zum Weiterarbeiten in einer neuen Sitzung genügt:
-„Lies ARCHITECTURE.md und PROMPTS.md, wir sind bei Prompt 6."
+„Lies ARCHITECTURE.md und PROMPTS.md, wir sind bei Prompt 7."
 
 Die Vorlage für alle noch offenen Teile ist `BootsCRM_reference.jsx` im
 Projekt-Root — die bisherige App, aus der portiert wird. Sie wird nicht

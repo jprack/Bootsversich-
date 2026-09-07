@@ -4,7 +4,10 @@
 // Backend-Host aus der aufgerufenen Adresse ableiten, nicht "localhost"
 // festschreiben: ruft das Handy die App unter http://192.168.x.y:5173 auf,
 // wäre "localhost" das Handy selbst und jeder Datenzugriff liefe ins Leere.
-const BASE = `http://${window.location.hostname}:3001/api`;
+// Außerhalb des Browsers (Testskripte in Node) gibt es kein window —
+// dann auf localhost zurückfallen.
+const HOST = typeof window !== "undefined" ? window.location.hostname : "localhost";
+const BASE = `http://${HOST}:3001/api`;
 
 async function anfrage(pfad, optionen = {}) {
   const antwort = await fetch(`${BASE}${pfad}`, {
@@ -77,6 +80,13 @@ export const api = {
         : anfrage("/partners", json("POST", data)),
 
     delete: (id) => anfrage(`/partners/${id}`, { method: "DELETE" }),
+  },
+
+  tasks: {
+    // Kommen vom Server nach Fälligkeit sortiert, erledigt als true/false.
+    list: () => anfrage("/tasks"),
+    toggle: (id, erledigt) => anfrage(`/tasks/${id}`, json("PUT", { erledigt })),
+    delete: (id) => anfrage(`/tasks/${id}`, { method: "DELETE" }),
   },
 };
 

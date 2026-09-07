@@ -4,6 +4,7 @@ import db from "../db.js";
 import { VERTRAG_FELDER, SPARTE_FELDER, QUOTE_FELDER, nurErlaubte } from "../lib/felder.js";
 import { insert } from "../lib/sql.js";
 import { kundeMitBooten } from "../lib/kunden.js";
+import { createEmpfehlungsTask } from "../lib/tasks-logic.js";
 
 const router = express.Router();
 
@@ -11,6 +12,9 @@ const router = express.Router();
 // entweder alles oder nichts. better-sqlite3 ist synchron, deshalb genügt
 // db.transaction() ohne async-Verrenkungen.
 const polizzeAnlegen = db.transaction((customerId, vertrag, sparten) => {
+  // Vor dem Einfügen prüfen: ist das die erste Polizze dieses Kunden?
+  const erstePolizze = db.prepare("SELECT COUNT(*) AS n FROM vertraege WHERE customer_id = ?").get(customerId).n === 0;
+
   const vertragId = randomUUID();
   insert(db, "vertraege", { id: vertragId, customer_id: customerId, ...vertrag });
 
@@ -20,6 +24,12 @@ const polizzeAnlegen = db.transaction((customerId, vertrag, sparten) => {
 
   db.prepare("UPDATE customers SET status = 'polizze', updated_at = datetime('now') WHERE id = ?")
     .run(customerId);
+
+  // Nach der ersten Polizze nach einer Empfehlung fragen — 30 Kalendertage
+  // später, wie in BootsCRM_reference.jsx.
+  if (erstePolizze) {
+    createEmpfehlungsTask(db.prepare("SELECT * FROM customers WHERE id = ?").get(customerId));
+  }
 
   return vertragId;
 });

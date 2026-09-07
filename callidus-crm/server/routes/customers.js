@@ -4,6 +4,7 @@ import db from "../db.js";
 import { KUNDEN_FELDER, BOOT_FELDER, nurErlaubte } from "../lib/felder.js";
 import { insert, update } from "../lib/sql.js";
 import { alleKundenMitBooten, kundeMitBooten } from "../lib/kunden.js";
+import { createOffertTasks, createKuendigungsTasks, clearKuendigungsTasks } from "../lib/tasks-logic.js";
 
 const router = express.Router();
 
@@ -30,14 +31,44 @@ router.post("/", (req, res) => {
   }
 
   const id = randomUUID();
-  insert(db, "customers", { id, ...daten });
+  const anlegen = db.transaction(() => {
+    insert(db, "customers", { id, ...daten });
+    const kunde = db.prepare("SELECT * FROM customers WHERE id = ?").get(id);
+    // Ein Kunde kann gleich mit Status "offert" angelegt werden — dann
+    // gelten dieselben Nachfass-Erinnerungen wie beim späteren Wechsel.
+    if (kunde.status === "offert") createOffertTasks(kunde);
+    if (kunde.vorversicherung_hauptfaelligkeit) createKuendigungsTasks(kunde);
+  });
+  anlegen();
   res.status(201).json(kundeMitBooten(id));
+});
+
+// Änderung und die daraus folgenden Aufgaben gehören zusammen: sonst könnte
+// ein Kunde auf "Offert" stehen, ohne dass die Nachfass-Erinnerungen
+// existieren — und genau die sind der Zweck der Statusführung.
+const kundeAktualisieren = db.transaction((id, daten, vorher) => {
+  update(db, "customers", id, daten, "updated_at = datetime('now')");
+  const kunde = db.prepare("SELECT * FROM customers WHERE id = ?").get(id);
+
+  // Nachfassen: nur beim Wechsel auf "offert", nicht bei jedem Speichern.
+  if (kunde.status === "offert" && vorher.status !== "offert") {
+    createOffertTasks(kunde);
+  }
+
+  // Kündigungsfrist: bei geänderter Hauptfälligkeit die alten Erinnerungen
+  // wegräumen und neu berechnen.
+  if (kunde.vorversicherung_hauptfaelligkeit &&
+      kunde.vorversicherung_hauptfaelligkeit !== vorher.vorversicherung_hauptfaelligkeit) {
+    clearKuendigungsTasks(id);
+    createKuendigungsTasks(kunde);
+  }
 });
 
 // PUT /api/customers/:id — Kunde aktualisieren (nur mitgeschickte Felder)
 router.put("/:id", (req, res) => {
   const { id } = req.params;
-  if (!db.prepare("SELECT 1 FROM customers WHERE id = ?").get(id)) {
+  const vorher = db.prepare("SELECT * FROM customers WHERE id = ?").get(id);
+  if (!vorher) {
     return res.status(404).json({ fehler: `Kunde ${id} nicht gefunden` });
   }
 
@@ -46,7 +77,7 @@ router.put("/:id", (req, res) => {
     return res.status(400).json({ fehler: "nachname darf nicht leer sein" });
   }
 
-  update(db, "customers", id, daten, "updated_at = datetime('now')");
+  kundeAktualisieren(id, daten, vorher);
   res.json(kundeMitBooten(id));
 });
 

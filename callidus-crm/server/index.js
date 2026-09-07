@@ -5,6 +5,8 @@ import customersRouter from "./routes/customers.js";
 import boatsRouter from "./routes/boats.js";
 import partnersRouter from "./routes/partners.js";
 import vertraegeRouter, { vertragRouter } from "./routes/vertraege.js";
+import tasksRouter from "./routes/tasks.js";
+import { pruefeGeburtstage } from "./lib/tasks-logic.js";
 
 const PORT = 3001;
 
@@ -49,8 +51,9 @@ app.use("/api/partners", partnersRouter);
 // der Kunden-Router hat für diese Pfade keine Route und reicht durch.
 app.use("/api/customers", vertraegeRouter);
 app.use("/api/vertraege", vertragRouter);
+app.use("/api/tasks", tasksRouter);
 
-// Weitere Bereiche (tasks, historie, documents, settings)
+// Weitere Bereiche (historie, documents, settings)
 // werden hier in den folgenden Schritten eingehängt.
 
 app.use((req, res) => {
@@ -73,8 +76,24 @@ app.use((err, req, res, next) => {
   res.status(500).json({ fehler: err.message });
 });
 
+// Geburtstage einmal beim Start und danach alle sechs Stunden prüfen.
+// Kein externer Dienst nötig: der Server läuft ohnehin, solange der PC an
+// ist. Läuft der PC tagelang durch, greift das Intervall; wird er täglich
+// neu gestartet, greift der Startlauf.
+const GEBURTSTAGS_INTERVALL_STUNDEN = 6;
+function geburtstagePruefen() {
+  try {
+    const { geprueft, angelegt } = pruefeGeburtstage();
+    if (angelegt > 0) console.log(`[aufgaben] ${angelegt} Geburtstags-Erinnerung(en) angelegt (${geprueft} Kunden mit Geburtsdatum)`);
+  } catch (e) {
+    console.error("[aufgaben] Geburtstagsprüfung fehlgeschlagen:", e.message);
+  }
+}
+
 app.listen(PORT, HOST, () => {
   console.log(`[server] http://localhost:${PORT}${IM_NETZ ? " (auch im lokalen Netz)" : ""}`);
   console.log(`[server] Datenbank: ${DB_PATH}`);
   console.log(`[server] Uploads:   ${UPLOADS_DIR}`);
+  geburtstagePruefen();
+  setInterval(geburtstagePruefen, GEBURTSTAGS_INTERVALL_STUNDEN * 60 * 60 * 1000);
 });
