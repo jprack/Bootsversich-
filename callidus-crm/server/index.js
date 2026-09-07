@@ -6,6 +6,7 @@ import boatsRouter from "./routes/boats.js";
 import partnersRouter from "./routes/partners.js";
 import vertraegeRouter, { vertragRouter } from "./routes/vertraege.js";
 import tasksRouter from "./routes/tasks.js";
+import antraegeRouter from "./routes/antraege.js";
 import { pruefeGeburtstage } from "./lib/tasks-logic.js";
 
 const PORT = 3001;
@@ -50,6 +51,7 @@ app.use("/api/partners", partnersRouter);
 // (Polizzen, Prämienberechnungen). Express probiert die Router der Reihe nach,
 // der Kunden-Router hat für diese Pfade keine Route und reicht durch.
 app.use("/api/customers", vertraegeRouter);
+app.use("/api/customers", antraegeRouter);
 app.use("/api/vertraege", vertragRouter);
 app.use("/api/tasks", tasksRouter);
 

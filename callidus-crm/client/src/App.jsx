@@ -80,7 +80,7 @@ export default function App() {
       <main className="app-main">
         {tab === "kunden" && <KundenTab partners={partners} />}
         {tab === "partner" && <PartnerTab customers={customers} onPartnersChanged={refreshPartners} />}
-        {tab === "rechner" && <RechnerTab customers={customers} onSaveToCustomer={saveQuoteToCustomer} />}
+        {tab === "rechner" && <RechnerTab customers={customers} onSaveToCustomer={saveQuoteToCustomer} onCustomersChanged={refreshCustomers} />}
         {tab === "aufgaben" && <AufgabenTab customers={customers} onTasksChanged={refreshTaskCount} />}
       </main>
     </div>

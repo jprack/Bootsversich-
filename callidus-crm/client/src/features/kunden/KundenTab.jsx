@@ -100,6 +100,7 @@ export default function KundenTab({ partners }) {
         onSaveBoat={saveBoat}
         onDeleteBoat={deleteBoat}
         onAddVertrag={addVertrag}
+        onCustomersChanged={loadCustomers}
       />
     );
   }

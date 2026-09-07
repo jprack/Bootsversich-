@@ -1,18 +1,16 @@
 // RechnerTab und ResultCard — aus BootsCRM_reference.jsx (Zeilen 835-1197),
-// programmatisch ausgeschnitten.
+// programmatisch ausgeschnitten und inhaltlich unverändert. Mit Prompt 7 sind
+// die Knöpfe "… mit diesen Werten öffnen" samt eingebetteten Antragsmasken
+// wieder dabei, die in Prompt 5 noch fehlten.
 //
-// Gekürzt wurde nur, was laut PROMPTS.md erst in Prompt 7 kommt: die beiden
-// Knöpfe "… mit diesen Werten öffnen" und die darunter eingebetteten Masken
-// NautimaAntragTab / CallidusDatenblattTab. Die Rechenlogik, die Formulare
-// und die Ergebnisdarstellung sind unverändert.
-//
-// Die Prämienberechnung wird über api.customers.saveQuote() beim Kunden
-// vermerkt statt über window.storage; id und Zeitstempel vergibt der Server.
+// id und Zeitstempel der gespeicherten Berechnung vergibt der Server.
 import { useState, useEffect, useMemo } from "react";
-import { Compass, Save, Check, Info, AlertTriangle } from "lucide-react";
+import { Compass, Save, Check, Info, AlertTriangle, FileCheck2, FileText, X } from "lucide-react";
 import { Field, WarnBox } from "../../components/ui.jsx";
 import { euro, pctFmt } from "../../lib/format.js";
 import { fullName } from "../kunden/helpers.js";
+import NautimaAntragTab from "./NautimaAntragTab.jsx";
+import CallidusDatenblattTab from "./CallidusDatenblattTab.jsx";
 import {
   thisYear, NAUTIMA_KASKO, NAUTIMA_INSASSENUNFALL, ZONEN, SFR_OPTIONEN,
   CALLIDUS_SY_KASKO_BINNEN, CALLIDUS_SY_KASKO_MITTELMEER,
@@ -32,6 +30,7 @@ function LeaderRow({ label, value, betont, negativ }) {
   );
 }
 
+/* ===================== Rechner-Tab ===================== */
 export default function RechnerTab({ customers, onSaveToCustomer, onCustomersChanged }) {
   const [bootstyp, setBootstyp] = useState("motorboot");
   const [baujahr, setBaujahr] = useState(2015);
@@ -116,7 +115,11 @@ export default function RechnerTab({ customers, onSaveToCustomer, onCustomersCha
     setTimeout(() => setSaveMsg(""), 2500);
   };
 
+  const [embedNautima, setEmbedNautima] = useState(null);
+  const [embedCallidus, setEmbedCallidus] = useState(null);
+
   return (
+    <>
     <div className="rechner-grid">
       <div className="panel formpanel">
         <h2 className="panel-title"><Compass size={18} /> Bootsdaten</h2>
@@ -262,8 +265,38 @@ export default function RechnerTab({ customers, onSaveToCustomer, onCustomersCha
 
       <div className="results">
         <ResultCard title="NAUTIMA" subtitle="Mannheimer Versicherung AG" result={nautimaResult} />
+        <button
+          type="button"
+          className="btn btn--doc"
+          onClick={() => setEmbedNautima({
+            bootstyp, baujahr, versicherungssumme, zone,
+            motorkw: bootstyp === "motorboot" ? motorkw : undefined,
+            segelflaeche: bootstyp === "segelboot" ? segelflaeche : undefined,
+            selbstbehalt: selbstbehaltNautima,
+            charter: charter === "keine" ? "nein" : charter,
+            _ts: Date.now(),
+          })}
+        >
+          <FileCheck2 size={15} /> NAUTIMA-Antrag mit diesen Werten öffnen
+        </button>
 
         <ResultCard title="Callidus-Eigentarif" subtitle="Entwurf 2026" result={callidusResult} />
+        <button
+          type="button"
+          className="btn btn--doc"
+          onClick={() => setEmbedCallidus({
+            bootstyp, baujahr, versicherungssumme, fahrtgebietZone: ccZone,
+            motorkw: bootstyp === "motorboot" ? motorkw : undefined,
+            segelflaeche: bootstyp === "segelboot" ? segelflaeche : undefined,
+            selbstbehalt: selbstbehaltCallidus,
+            charter: charter === "keine" ? "nein" : charter,
+            kategorieSY, kategorieMY, holzCarbon, maschinendeckung,
+            haftpflichtsumme: hpVSCallidus === 0 ? 5000000 : 10000000,
+            _ts: Date.now(),
+          })}
+        >
+          <FileText size={15} /> Bootsdatenblatt mit diesen Werten öffnen
+        </button>
 
         {customers.length > 0 && (
           <div className="panel save-panel">
@@ -281,6 +314,25 @@ export default function RechnerTab({ customers, onSaveToCustomer, onCustomersCha
       </div>
     </div>
 
+    {embedNautima && (
+      <div className="panel embed-panel">
+        <div className="embed-panel-head">
+          <h3 className="panel-subtitle" style={{ marginTop: 0 }}><FileCheck2 size={15} /> NAUTIMA-Antrag — mit den Werten dieser Berechnung</h3>
+          <button className="icon-btn" onClick={() => setEmbedNautima(null)} title="Schließen"><X size={16} /></button>
+        </div>
+        <NautimaAntragTab customers={customers} prefill={embedNautima} onCustomersChanged={onCustomersChanged} />
+      </div>
+    )}
+    {embedCallidus && (
+      <div className="panel embed-panel">
+        <div className="embed-panel-head">
+          <h3 className="panel-subtitle" style={{ marginTop: 0 }}><FileText size={15} /> Bootsdatenblatt — mit den Werten dieser Berechnung</h3>
+          <button className="icon-btn" onClick={() => setEmbedCallidus(null)} title="Schließen"><X size={16} /></button>
+        </div>
+        <CallidusDatenblattTab customers={customers} prefill={embedCallidus} onCustomersChanged={onCustomersChanged} />
+      </div>
+    )}
+    </>
   );
 }
 

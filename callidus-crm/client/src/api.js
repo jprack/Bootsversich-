@@ -62,6 +62,10 @@ export const api = {
     saveQuote: (customerId, quote) => anfrage(`/customers/${customerId}/quotes`, json("POST", quote)),
     quotes: (customerId) => anfrage(`/customers/${customerId}/quotes`),
 
+    // Vollständige Rohdaten eines NAUTIMA-Antrags oder Bootsdatenblatts.
+    saveAntrag: (customerId, antrag) => anfrage(`/customers/${customerId}/antraege`, json("POST", antrag)),
+    antraege: (customerId) => anfrage(`/customers/${customerId}/antraege`),
+
     addBoat: (customerId, boat) => anfrage(`/customers/${customerId}/boats`, json("POST", boat)),
     updateBoat: (boat) => anfrage(`/boats/${boat.id}`, json("PUT", boat)),
     deleteBoat: (id) => anfrage(`/boats/${id}`, { method: "DELETE" }),
