@@ -13,3 +13,10 @@ apps/api/prisma/migrations
 02_CORE_CRM
 03_LEAD_GENERATION_ENGINE
 04_DEALER_DATABASE
+
+# Eigenstaendiges Teilprojekt mit eigener Werkzeugkette (npm, eigenes Vite/
+# Express-Setup). Liegt hier nur zwischengelagert, bis das Repository
+# Callidus-CRM existiert; die Formatierungsregeln dieses Monorepos gelten
+# dafuer nicht. ARCHITECTURE.md, PROMPTS.md und START_HIER.md stammen
+# ausserdem unveraendert aus dem Vorlagenpaket und werden nicht umgesetzt.
+callidus-crm
